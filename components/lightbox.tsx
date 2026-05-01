@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { ChevronLeft, ChevronRight, X, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { SmartImage } from "@/components/smart-image";
 
 export type LightboxImage = {
   id: string;
@@ -89,12 +90,13 @@ export function Lightbox({
       )}
 
       <div className="max-w-[95vw] max-h-[85vh] flex items-center" onClick={(e) => e.stopPropagation()}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <SmartImage
+          key={img.id}
           src={img.url}
           alt={img.caption ?? ""}
-          decoding="async"
-          className="max-w-[95vw] max-h-[85vh] object-contain rounded-2xl"
+          loading="eager"
+          wrapperClassName="rounded-2xl"
+          className="max-w-[95vw] max-h-[85vh] object-contain"
         />
       </div>
 

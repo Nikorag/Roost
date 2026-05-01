@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { ImagePlus, Trash2, Sparkles, Wand2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Lightbox } from "@/components/lightbox";
+import { SmartImage } from "@/components/smart-image";
 import { cn } from "@/lib/utils";
 
 export type ProjectImage = {
@@ -188,8 +189,7 @@ export function ProjectImages({
                       basedOn === b.id ? "border-emerald-500" : "border-transparent",
                     )}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={b.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
+                    <SmartImage src={b.url} alt="" wrapperClassName="size-full" className="size-full object-cover" />
                   </button>
                 ))}
                 <button
@@ -309,13 +309,11 @@ function ImageTile({
       className="group relative rounded-2xl overflow-hidden border bg-muted aspect-square cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       aria-label="View image"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <SmartImage
         src={img.url}
         alt={img.caption ?? ""}
-        className="absolute inset-0 size-full object-cover"
-        loading="lazy"
-        decoding="async"
+        wrapperClassName="absolute inset-0 size-full"
+        className="size-full object-cover"
       />
       {img.aiGenerated && (
         <Badge className="absolute top-2 left-2 bg-pastel-lilac text-purple-900">
