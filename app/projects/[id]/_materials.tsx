@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Pencil, Trash2, Check, X, Sparkles, Link2, ExternalLink, Plus, ShoppingCart, PackageCheck } from "lucide-react";
+import { Pencil, Trash2, Sparkles, Link2, ExternalLink, Plus, ShoppingCart, PackageCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney, cn } from "@/lib/utils";
+import { Modal } from "@/components/modal";
 import type { OptionInput } from "@/lib/actions";
 
 type Option = {
@@ -116,104 +117,62 @@ function AddMaterialBar({
 
 function MaterialCard({ material, actions }: { material: Material; actions: Actions }) {
   const [pending, start] = useTransition();
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(material.name);
-  const [qty, setQty] = useState(material.quantity ?? "");
-  const [adding, setAdding] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [optionDialog, setOptionDialog] = useState<{ mode: "add" } | { mode: "edit"; id: string } | null>(null);
+
+  const editingOption =
+    optionDialog?.mode === "edit"
+      ? material.options.find((o) => o.id === optionDialog.id) ?? null
+      : null;
 
   return (
     <div className={cn("rounded-2xl p-4 space-y-3", material.purchased ? "bg-pastel-mint/40" : "bg-muted/40")}>
       <div className="flex items-start justify-between gap-3">
-        {editing ? (
-          <div className="flex-1 space-y-2">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full h-9 rounded-xl border bg-background px-3 text-sm"
-            />
-            <input
-              value={qty}
-              onChange={(e) => setQty(e.target.value)}
-              placeholder="Quantity"
-              className="w-full h-9 rounded-xl border bg-background px-3 text-sm"
-            />
-            <div className="flex justify-end gap-1">
-              <button
-                onClick={() => {
-                  setName(material.name);
-                  setQty(material.quantity ?? "");
-                  setEditing(false);
-                }}
-                className="rounded-full px-3 h-8 text-xs hover:bg-background"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={pending || !name.trim()}
-                onClick={() =>
-                  start(async () => {
-                    await actions.editMaterial(material.id, {
-                      name: name.trim(),
-                      quantity: qty.trim() || undefined,
-                    });
-                    setEditing(false);
-                  })
-                }
-                className="rounded-full px-3 h-8 text-xs bg-primary text-primary-foreground disabled:opacity-50"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">{material.name}</span>
-              {material.isOpenChoice && (
-                <Badge className="bg-pastel-lemon text-yellow-900">Open choice</Badge>
-              )}
-            </div>
-            {material.quantity && (
-              <div className="text-xs text-muted-foreground">{material.quantity}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-sm">{material.name}</span>
+            {material.isOpenChoice && (
+              <Badge className="bg-pastel-lemon text-yellow-900">Open choice</Badge>
             )}
           </div>
-        )}
-        {!editing && (
-          <div className="flex gap-1 shrink-0">
-            <button
-              disabled={pending}
-              onClick={() => start(() => actions.setPurchased(material.id, !material.purchased))}
-              className={cn(
-                "size-8 rounded-full flex items-center justify-center",
-                material.purchased
-                  ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                  : "hover:bg-background text-muted-foreground",
-              )}
-              aria-label={material.purchased ? "Mark as to purchase" : "Mark as purchased"}
-              title={material.purchased ? "Mark as to purchase" : "Mark as purchased"}
-            >
-              {material.purchased ? <PackageCheck className="size-3.5" /> : <ShoppingCart className="size-3.5" />}
-            </button>
-            <button
-              onClick={() => setEditing(true)}
-              className="size-8 rounded-full hover:bg-background flex items-center justify-center"
-              aria-label="Edit"
-            >
-              <Pencil className="size-3.5" />
-            </button>
-            <button
-              disabled={pending}
-              onClick={() => {
-                if (confirm(`Delete material "${material.name}"?`))
-                  start(() => actions.deleteMaterial(material.id));
-              }}
-              className="size-8 rounded-full hover:bg-destructive/10 text-destructive flex items-center justify-center"
-              aria-label="Delete"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
-          </div>
-        )}
+          {material.quantity && (
+            <div className="text-xs text-muted-foreground">{material.quantity}</div>
+          )}
+        </div>
+        <div className="flex gap-1 shrink-0">
+          <button
+            disabled={pending}
+            onClick={() => start(() => actions.setPurchased(material.id, !material.purchased))}
+            className={cn(
+              "size-8 rounded-full flex items-center justify-center",
+              material.purchased
+                ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                : "hover:bg-background text-muted-foreground",
+            )}
+            aria-label={material.purchased ? "Mark as to purchase" : "Mark as purchased"}
+            title={material.purchased ? "Mark as to purchase" : "Mark as purchased"}
+          >
+            {material.purchased ? <PackageCheck className="size-3.5" /> : <ShoppingCart className="size-3.5" />}
+          </button>
+          <button
+            onClick={() => setEditOpen(true)}
+            className="size-8 rounded-full hover:bg-background flex items-center justify-center"
+            aria-label="Edit"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+          <button
+            disabled={pending}
+            onClick={() => {
+              if (confirm(`Delete material "${material.name}"?`))
+                start(() => actions.deleteMaterial(material.id));
+            }}
+            className="size-8 rounded-full hover:bg-destructive/10 text-destructive flex items-center justify-center"
+            aria-label="Delete"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
       </div>
 
       {material.options.length > 0 && (
@@ -224,31 +183,126 @@ function MaterialCard({ material, actions }: { material: Material; actions: Acti
               option={o}
               chosen={material.chosenOptionId === o.id}
               onChoose={() => actions.chooseOption(material.id, o.id)}
-              onEdit={(opt) => actions.editOption(o.id, opt)}
+              onEdit={() => setOptionDialog({ mode: "edit", id: o.id })}
               onDelete={() => actions.deleteOption(o.id)}
             />
           ))}
         </div>
       )}
 
-      {adding ? (
-        <OptionEditor
-          onCancel={() => setAdding(false)}
-          onSave={async (opt) => {
+      <button
+        type="button"
+        onClick={() => setOptionDialog({ mode: "add" })}
+        className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-background"
+      >
+        <Plus className="size-3.5" /> Add purchase option
+      </button>
+
+      <MaterialEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        initial={{ name: material.name, quantity: material.quantity ?? "" }}
+        onSave={async (input) => {
+          await actions.editMaterial(material.id, {
+            name: input.name,
+            quantity: input.quantity || undefined,
+          });
+          setEditOpen(false);
+        }}
+      />
+
+      <OptionDialog
+        open={optionDialog !== null}
+        mode={optionDialog?.mode === "edit" ? "edit" : "add"}
+        onOpenChange={(o) => {
+          if (!o) setOptionDialog(null);
+        }}
+        initial={
+          editingOption
+            ? {
+                label: editingOption.label,
+                vendor: editingOption.vendor ?? "",
+                url: editingOption.url ?? "",
+                priceCents: editingOption.priceCents,
+                description: editingOption.description ?? "",
+              }
+            : undefined
+        }
+        onSave={async (opt) => {
+          if (optionDialog?.mode === "edit") {
+            await actions.editOption(optionDialog.id, opt);
+          } else {
             await actions.addOption(material.id, opt);
-            setAdding(false);
-          }}
+          }
+          setOptionDialog(null);
+        }}
+      />
+    </div>
+  );
+}
+
+function MaterialEditDialog({
+  open,
+  onOpenChange,
+  initial,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initial: { name: string; quantity: string };
+  onSave: (input: { name: string; quantity: string }) => Promise<void>;
+}) {
+  const [name, setName] = useState(initial.name);
+  const [qty, setQty] = useState(initial.quantity);
+  const [pending, start] = useTransition();
+  return (
+    <Modal
+      open={open}
+      onOpenChange={(o) => {
+        if (o) {
+          setName(initial.name);
+          setQty(initial.quantity);
+        }
+        onOpenChange(o);
+      }}
+      title="Edit material"
+    >
+      <div className="space-y-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Material"
+          className="w-full h-10 rounded-2xl border bg-background px-4 text-sm"
         />
-      ) : (
+        <input
+          value={qty}
+          onChange={(e) => setQty(e.target.value)}
+          placeholder="Quantity"
+          className="w-full h-10 rounded-2xl border bg-background px-4 text-sm"
+        />
+      </div>
+      <div className="flex justify-end gap-1 pt-1">
         <button
           type="button"
-          onClick={() => setAdding(true)}
-          className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-background"
+          onClick={() => onOpenChange(false)}
+          className="rounded-full px-3 h-9 text-xs hover:bg-muted"
         >
-          <Plus className="size-3.5" /> Add purchase option
+          Cancel
         </button>
-      )}
-    </div>
+        <button
+          type="button"
+          disabled={pending || !name.trim()}
+          onClick={() =>
+            start(async () => {
+              await onSave({ name: name.trim(), quantity: qty.trim() });
+            })
+          }
+          className="rounded-full px-3 h-9 text-xs bg-primary text-primary-foreground disabled:opacity-50"
+        >
+          Save
+        </button>
+      </div>
+    </Modal>
   );
 }
 
@@ -262,29 +316,10 @@ function OptionRow({
   option: Option;
   chosen: boolean;
   onChoose: () => Promise<void>;
-  onEdit: (opt: OptionInput) => Promise<void>;
+  onEdit: () => void;
   onDelete: () => Promise<void>;
 }) {
   const [pending, start] = useTransition();
-  const [editing, setEditing] = useState(false);
-  if (editing) {
-    return (
-      <OptionEditor
-        initial={{
-          label: option.label,
-          vendor: option.vendor ?? "",
-          url: option.url ?? "",
-          priceCents: option.priceCents,
-          description: option.description ?? "",
-        }}
-        onCancel={() => setEditing(false)}
-        onSave={async (opt) => {
-          await onEdit(opt);
-          setEditing(false);
-        }}
-      />
-    );
-  }
   return (
     <div
       className={cn(
@@ -331,7 +366,7 @@ function OptionRow({
         </button>
         <div className="flex gap-1 shrink-0">
           <button
-            onClick={() => setEditing(true)}
+            onClick={onEdit}
             className="size-7 rounded-full hover:bg-muted flex items-center justify-center"
             aria-label="Edit option"
           >
@@ -353,14 +388,18 @@ function OptionRow({
   );
 }
 
-function OptionEditor({
+function OptionDialog({
+  open,
+  onOpenChange,
+  mode,
   initial,
   onSave,
-  onCancel,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: "add" | "edit";
   initial?: { label: string; vendor: string; url: string; priceCents: number | null; description: string };
   onSave: (opt: OptionInput) => Promise<void>;
-  onCancel: () => void;
 }) {
   const [label, setLabel] = useState(initial?.label ?? "");
   const [vendor, setVendor] = useState(initial?.vendor ?? "");
@@ -389,8 +428,7 @@ function OptionEditor({
         return;
       }
       const data = await res.json();
-      if (data.label && !label.trim()) setLabel(data.label);
-      else if (data.label) setLabel(data.label);
+      if (data.label) setLabel(data.label);
       if (data.vendor) setVendor(data.vendor);
       if (data.priceCents != null) setPriceStr((data.priceCents / 100).toString());
       if (data.description) setDescription(data.description);
@@ -402,61 +440,82 @@ function OptionEditor({
   }
 
   return (
-    <div className="rounded-2xl border bg-background p-3 space-y-2">
-      <div className="grid sm:grid-cols-[1fr_auto] gap-2">
-        <div className="relative">
-          <Link2 className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+    <Modal
+      open={open}
+      onOpenChange={(o) => {
+        if (o) {
+          setLabel(initial?.label ?? "");
+          setVendor(initial?.vendor ?? "");
+          setUrl(initial?.url ?? "");
+          setPriceStr(initial?.priceCents != null ? (initial.priceCents / 100).toString() : "");
+          setDescription(initial?.description ?? "");
+          setFetchError(null);
+        }
+        onOpenChange(o);
+      }}
+      title={mode === "edit" ? "Edit purchase option" : "Add purchase option"}
+    >
+      <div className="space-y-2">
+        <div className="grid sm:grid-cols-[1fr_auto] gap-2">
+          <div className="relative">
+            <Link2 className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://… (paste a product URL)"
+              className="w-full h-10 rounded-2xl border bg-background pl-9 pr-3 text-sm"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={fillFromUrl}
+            disabled={fetching || !url.trim()}
+            className="h-10 rounded-2xl px-3 text-xs bg-pastel-lilac text-purple-900 disabled:opacity-50 inline-flex items-center gap-1"
+          >
+            <Sparkles className="size-3.5" />
+            {fetching ? "Reading…" : "Fill from link"}
+          </button>
+        </div>
+        {fetchError && <p className="text-xs text-destructive">{fetchError}</p>}
+
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="Label (e.g. Skimming Stone 2.5L)"
+          className="w-full h-10 rounded-2xl border bg-background px-4 text-sm"
+        />
+        <div className="grid grid-cols-2 gap-2">
           <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://… (paste a product URL and let Gemini fill the rest)"
-            className="w-full h-9 rounded-xl border bg-background pl-9 pr-3 text-sm"
+            value={vendor}
+            onChange={(e) => setVendor(e.target.value)}
+            placeholder="From (vendor)"
+            className="h-10 rounded-2xl border bg-background px-4 text-sm"
+          />
+          <input
+            value={priceStr}
+            onChange={(e) => setPriceStr(e.target.value)}
+            inputMode="decimal"
+            placeholder="Price (£)"
+            className="h-10 rounded-2xl border bg-background px-4 text-sm"
           />
         </div>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Description"
+          className="w-full min-h-[5rem] rounded-2xl border bg-background px-4 py-3 text-sm"
+        />
+      </div>
+      <div className="flex justify-end gap-1 pt-1">
         <button
           type="button"
-          onClick={fillFromUrl}
-          disabled={fetching || !url.trim()}
-          className="h-9 rounded-xl px-3 text-xs bg-pastel-lilac text-purple-900 disabled:opacity-50 inline-flex items-center gap-1"
+          onClick={() => onOpenChange(false)}
+          className="rounded-full px-3 h-9 text-xs hover:bg-muted"
         >
-          <Sparkles className="size-3.5" />
-          {fetching ? "Reading…" : "Fill from link"}
-        </button>
-      </div>
-      {fetchError && <p className="text-xs text-destructive">{fetchError}</p>}
-
-      <input
-        value={label}
-        onChange={(e) => setLabel(e.target.value)}
-        placeholder="Label (e.g. Skimming Stone 2.5L)"
-        className="w-full h-9 rounded-xl border bg-background px-3 text-sm"
-      />
-      <div className="grid sm:grid-cols-2 gap-2">
-        <input
-          value={vendor}
-          onChange={(e) => setVendor(e.target.value)}
-          placeholder="From (vendor)"
-          className="h-9 rounded-xl border bg-background px-3 text-sm"
-        />
-        <input
-          value={priceStr}
-          onChange={(e) => setPriceStr(e.target.value)}
-          inputMode="decimal"
-          placeholder="Price (£)"
-          className="h-9 rounded-xl border bg-background px-3 text-sm"
-        />
-      </div>
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Description"
-        className="w-full min-h-[3.5rem] rounded-xl border bg-background px-3 py-2 text-sm"
-      />
-      <div className="flex justify-end gap-1">
-        <button onClick={onCancel} className="rounded-full px-3 h-8 text-xs hover:bg-muted">
-          <X className="size-3.5 inline" /> Cancel
+          Cancel
         </button>
         <button
+          type="button"
           disabled={pending || !label.trim()}
           onClick={() =>
             start(async () => {
@@ -470,12 +529,12 @@ function OptionEditor({
               });
             })
           }
-          className="rounded-full px-3 h-8 text-xs bg-primary text-primary-foreground disabled:opacity-50"
+          className="rounded-full px-3 h-9 text-xs bg-primary text-primary-foreground disabled:opacity-50"
         >
-          <Check className="size-3.5 inline" /> Save
+          Save
         </button>
       </div>
-    </div>
+    </Modal>
   );
 }
 

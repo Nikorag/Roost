@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Pencil, Trash2, Check, X, Hammer, UsersRound, Plus } from "lucide-react";
+import { Pencil, Trash2, X, Hammer, UsersRound, Plus } from "lucide-react";
 import { ACTION_STATUSES, STATUS_LABEL, cn } from "@/lib/utils";
 import { EntityPicker, type PickerItem } from "@/components/entity-picker";
+import { Modal } from "@/components/modal";
 
 export type ActionRowAttachments = {
   contractors: PickerItem[];
@@ -52,57 +53,11 @@ export function ActionRow({
   onCreatePersonnel: (name: string) => Promise<{ id: string } | void>;
 }) {
   const [pending, start] = useTransition();
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(action.title);
-  const [desc, setDesc] = useState(action.description ?? "");
+  const [editOpen, setEditOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState<null | "contractor" | "personnel">(null);
 
   const contractorIds = attachments.contractors.map((c) => c.id);
   const personnelIds = attachments.personnel.map((p) => p.id);
-
-  if (editing) {
-    return (
-      <div className="rounded-2xl bg-muted/40 px-3 py-2 space-y-2">
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full h-9 rounded-xl border bg-background px-3 text-sm"
-        />
-        <textarea
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-          className="w-full min-h-[3rem] rounded-xl border bg-background px-3 py-2 text-sm"
-          placeholder="Description (optional)"
-        />
-        <div className="flex justify-end gap-1">
-          <button
-            type="button"
-            onClick={() => {
-              setTitle(action.title);
-              setDesc(action.description ?? "");
-              setEditing(false);
-            }}
-            className="rounded-full px-3 h-8 text-xs hover:bg-muted"
-          >
-            <X className="size-3.5 inline" /> Cancel
-          </button>
-          <button
-            type="button"
-            disabled={pending || !title.trim()}
-            onClick={() =>
-              start(async () => {
-                await onEdit({ title: title.trim(), description: desc.trim() });
-                setEditing(false);
-              })
-            }
-            className="rounded-full px-3 h-8 text-xs bg-primary text-primary-foreground disabled:opacity-50"
-          >
-            <Check className="size-3.5 inline" /> Save
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="rounded-2xl bg-muted/40 px-3 py-2 space-y-2">
@@ -146,7 +101,7 @@ export function ActionRow({
           </select>
           <button
             type="button"
-            onClick={() => setEditing(true)}
+            onClick={() => setEditOpen(true)}
             className="size-8 rounded-full hover:bg-muted flex items-center justify-center"
             aria-label="Edit"
           >
@@ -201,7 +156,85 @@ export function ActionRow({
         onCreate={onCreatePersonnel}
         createLabel="Create person"
       />
+
+      <ActionEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        initialTitle={action.title}
+        initialDesc={action.description ?? ""}
+        onSave={async (input) => {
+          await onEdit(input);
+          setEditOpen(false);
+        }}
+      />
     </div>
+  );
+}
+
+function ActionEditDialog({
+  open,
+  onOpenChange,
+  initialTitle,
+  initialDesc,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialTitle: string;
+  initialDesc: string;
+  onSave: (input: { title: string; description: string }) => Promise<void>;
+}) {
+  const [t, setT] = useState(initialTitle);
+  const [d, setD] = useState(initialDesc);
+  const [pending, start] = useTransition();
+  return (
+    <Modal
+      open={open}
+      onOpenChange={(o) => {
+        if (o) {
+          setT(initialTitle);
+          setD(initialDesc);
+        }
+        onOpenChange(o);
+      }}
+      title="Edit action"
+    >
+      <div className="space-y-2">
+        <input
+          value={t}
+          onChange={(e) => setT(e.target.value)}
+          placeholder="Title"
+          className="w-full h-10 rounded-2xl border bg-background px-4 text-sm"
+        />
+        <textarea
+          value={d}
+          onChange={(e) => setD(e.target.value)}
+          placeholder="Description (optional)"
+          className="w-full min-h-[6rem] rounded-2xl border bg-background px-4 py-3 text-sm"
+        />
+      </div>
+      <div className="flex justify-end gap-1 pt-1">
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="rounded-full px-3 h-9 text-xs hover:bg-muted"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          disabled={pending || !t.trim()}
+          onClick={() =>
+            start(async () => {
+              await onSave({ title: t.trim(), description: d.trim() });
+            })
+          }
+          className="rounded-full px-3 h-9 text-xs bg-primary text-primary-foreground disabled:opacity-50"
+        >
+          Save
+        </button>
+      </div>
+    </Modal>
   );
 }
 
