@@ -1,0 +1,20 @@
+node_modules
+.next
+.env
+.env.local
+.env.*.local
+.DS_Store
+.vercel
+.turbo
+*.tsbuildinfo
+next-env.d.ts
+drizzle/meta
+.env*.local
+
+# Service account keys etc.
+*.pem
+*-key.json
+googlekey.json
+sa.json
+service-account*.json
+.claude/

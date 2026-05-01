@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 30 40% 98%;
+  --foreground: 222 28% 14%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 28% 14%;
+
+  --primary: 168 50% 56%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 280 60% 92%;
+  --secondary-foreground: 280 35% 25%;
+
+  --muted: 220 22% 96%;
+  --muted-foreground: 220 12% 45%;
+
+  --accent: 24 95% 86%;
+  --accent-foreground: 24 50% 25%;
+
+  --destructive: 0 70% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 220 18% 90%;
+  --input: 220 18% 90%;
+  --ring: 168 50% 56%;
+
+  --radius: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 222 28% 10%;
+    --foreground: 30 40% 96%;
+    --card: 222 26% 14%;
+    --card-foreground: 30 40% 96%;
+    --muted: 222 18% 18%;
+    --muted-foreground: 220 12% 70%;
+    --border: 222 18% 22%;
+    --input: 222 18% 22%;
+  }
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html, body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.glass {
+  background: color-mix(in srgb, hsl(var(--card)) 80%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+/* hide scrollbars in horizontal pill scrollers */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* iOS Safari renders date/time inputs at intrinsic width and ignores width:100%.
+   Force them to behave like normal text inputs. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  margin-left: auto;
+  opacity: 0.6;
+}
