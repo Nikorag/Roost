@@ -8,11 +8,14 @@ import { formatMoney } from "@/lib/utils";
 export default async function MaterialsPage() {
   const materials = await db.select().from(schema.materials);
   const projectIds = Array.from(new Set(materials.map((m) => m.projectId)));
+  const materialIds = materials.map((m) => m.id);
   const [projects, options] = await Promise.all([
     projectIds.length
       ? db.select().from(schema.projects).where(inArray(schema.projects.id, projectIds))
       : Promise.resolve([]),
-    db.select().from(schema.materialOptions),
+    materialIds.length
+      ? db.select().from(schema.materialOptions).where(inArray(schema.materialOptions.materialId, materialIds))
+      : Promise.resolve([]),
   ]);
   const pmap = new Map(projects.map((p) => [p.id, p]));
   const omap = new Map<string, typeof options>();
@@ -47,6 +50,15 @@ export default async function MaterialsPage() {
                 )}
               </CardHeader>
               <CardContent className="text-sm space-y-2">
+                <Badge
+                  className={
+                    m.purchased
+                      ? "bg-pastel-mint text-emerald-900"
+                      : "bg-pastel-lemon text-yellow-900"
+                  }
+                >
+                  {m.purchased ? "On hand" : "To purchase"}
+                </Badge>
                 {m.quantity && <div className="text-muted-foreground">{m.quantity}</div>}
                 {m.isOpenChoice && (
                   <div className="flex flex-wrap gap-1">

@@ -93,6 +93,51 @@ export async function deleteTask(taskId: string) {
   if (row) revalidatePath(`/projects/${row.projectId}`);
 }
 
+export async function setTaskAssignee(taskId: string, userId: string | null) {
+  await requireUser();
+  const [row] = await db
+    .update(schema.tasks)
+    .set({ assigneeId: userId })
+    .where(eq(schema.tasks.id, taskId))
+    .returning();
+  if (row) {
+    revalidatePath(`/projects/${row.projectId}`);
+    revalidatePath("/my/tasks");
+  }
+}
+
+export async function attachTaskContractor(taskId: string, contractorId: string) {
+  await requireUser();
+  await db.insert(schema.taskContractors).values({ taskId, contractorId }).onConflictDoNothing();
+  const [row] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, taskId)).limit(1);
+  if (row) revalidatePath(`/projects/${row.projectId}`);
+}
+
+export async function detachTaskContractor(taskId: string, contractorId: string) {
+  await requireUser();
+  await db
+    .delete(schema.taskContractors)
+    .where(and(eq(schema.taskContractors.taskId, taskId), eq(schema.taskContractors.contractorId, contractorId)));
+  const [row] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, taskId)).limit(1);
+  if (row) revalidatePath(`/projects/${row.projectId}`);
+}
+
+export async function attachTaskPersonnel(taskId: string, personnelId: string) {
+  await requireUser();
+  await db.insert(schema.taskPersonnel).values({ taskId, personnelId }).onConflictDoNothing();
+  const [row] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, taskId)).limit(1);
+  if (row) revalidatePath(`/projects/${row.projectId}`);
+}
+
+export async function detachTaskPersonnel(taskId: string, personnelId: string) {
+  await requireUser();
+  await db
+    .delete(schema.taskPersonnel)
+    .where(and(eq(schema.taskPersonnel.taskId, taskId), eq(schema.taskPersonnel.personnelId, personnelId)));
+  const [row] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, taskId)).limit(1);
+  if (row) revalidatePath(`/projects/${row.projectId}`);
+}
+
 /* ---------- actions ---------- */
 
 export async function addAction(projectId: string, title: string, assigneeId?: string | null) {
@@ -123,6 +168,51 @@ export async function deleteAction(id: string) {
   if (row) revalidatePath(`/projects/${row.projectId}`);
 }
 
+export async function setActionAssignee(id: string, userId: string | null) {
+  await requireUser();
+  const [row] = await db
+    .update(schema.actions)
+    .set({ assigneeId: userId })
+    .where(eq(schema.actions.id, id))
+    .returning();
+  if (row) {
+    revalidatePath(`/projects/${row.projectId}`);
+    revalidatePath("/my/actions");
+  }
+}
+
+export async function attachActionContractor(actionId: string, contractorId: string) {
+  await requireUser();
+  await db.insert(schema.actionContractors).values({ actionId, contractorId }).onConflictDoNothing();
+  const [row] = await db.select().from(schema.actions).where(eq(schema.actions.id, actionId)).limit(1);
+  if (row) revalidatePath(`/projects/${row.projectId}`);
+}
+
+export async function detachActionContractor(actionId: string, contractorId: string) {
+  await requireUser();
+  await db
+    .delete(schema.actionContractors)
+    .where(and(eq(schema.actionContractors.actionId, actionId), eq(schema.actionContractors.contractorId, contractorId)));
+  const [row] = await db.select().from(schema.actions).where(eq(schema.actions.id, actionId)).limit(1);
+  if (row) revalidatePath(`/projects/${row.projectId}`);
+}
+
+export async function attachActionPersonnel(actionId: string, personnelId: string) {
+  await requireUser();
+  await db.insert(schema.actionPersonnel).values({ actionId, personnelId }).onConflictDoNothing();
+  const [row] = await db.select().from(schema.actions).where(eq(schema.actions.id, actionId)).limit(1);
+  if (row) revalidatePath(`/projects/${row.projectId}`);
+}
+
+export async function detachActionPersonnel(actionId: string, personnelId: string) {
+  await requireUser();
+  await db
+    .delete(schema.actionPersonnel)
+    .where(and(eq(schema.actionPersonnel.actionId, actionId), eq(schema.actionPersonnel.personnelId, personnelId)));
+  const [row] = await db.select().from(schema.actions).where(eq(schema.actions.id, actionId)).limit(1);
+  if (row) revalidatePath(`/projects/${row.projectId}`);
+}
+
 /* ---------- contractors / personnel / tools (directories) ---------- */
 
 export async function createContractor(input: {
@@ -135,8 +225,9 @@ export async function createContractor(input: {
   rating?: number | null;
 }) {
   await requireUser();
-  await db.insert(schema.contractors).values(input);
+  const [row] = await db.insert(schema.contractors).values(input).returning();
   revalidatePath("/contractors");
+  return row;
 }
 
 export async function editContractor(
@@ -179,8 +270,9 @@ export async function createPersonnel(input: {
   notes?: string;
 }) {
   await requireUser();
-  await db.insert(schema.personnel).values(input);
+  const [row] = await db.insert(schema.personnel).values(input).returning();
   revalidatePath("/personnel");
+  return row;
 }
 
 export async function editPersonnel(
@@ -215,8 +307,9 @@ export async function deletePersonnel(id: string) {
 
 export async function createTool(input: { name: string; ownedBy?: string; location?: string; notes?: string }) {
   await requireUser();
-  await db.insert(schema.tools).values(input);
+  const [row] = await db.insert(schema.tools).values(input).returning();
   revalidatePath("/tools");
+  return row;
 }
 
 export async function editTool(
@@ -354,6 +447,16 @@ export async function editMaterial(id: string, input: { name: string; quantity?:
   if (row) revalidatePath(`/projects/${row.projectId}`);
 }
 
+export async function setMaterialPurchased(id: string, purchased: boolean) {
+  await requireUser();
+  const [row] = await db
+    .update(schema.materials)
+    .set({ purchased })
+    .where(eq(schema.materials.id, id))
+    .returning();
+  if (row) revalidatePath(`/projects/${row.projectId}`);
+}
+
 export async function deleteMaterial(id: string) {
   await requireUser();
   const [row] = await db.delete(schema.materials).where(eq(schema.materials.id, id)).returning();
@@ -481,6 +584,28 @@ export async function addEvent(input: {
   }
   revalidatePath(`/projects/${input.projectId}`);
   revalidatePath("/calendar");
+}
+
+export async function editEvent(
+  id: string,
+  input: { title: string; startsOn: Date; durationDays: number; notes?: string | null },
+) {
+  await requireUser();
+  const days = Math.max(1, Math.round(input.durationDays));
+  const [row] = await db
+    .update(schema.events)
+    .set({
+      title: input.title,
+      startsOn: input.startsOn,
+      durationDays: days,
+      notes: input.notes ?? null,
+    })
+    .where(eq(schema.events.id, id))
+    .returning();
+  if (row) {
+    revalidatePath(`/projects/${row.projectId}`);
+    revalidatePath("/calendar");
+  }
 }
 
 export async function deleteEvent(id: string) {

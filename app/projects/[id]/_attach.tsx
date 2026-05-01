@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Plus, X } from "lucide-react";
+import { EntityPicker } from "@/components/entity-picker";
 
 export type AttachItem = { id: string; label: string; sub?: string };
 
@@ -12,6 +13,8 @@ export function AttachCard({
   attachedIds,
   onAttach,
   onDetach,
+  onCreate,
+  createLabel,
 }: {
   title: string;
   icon: React.ReactNode;
@@ -19,26 +22,30 @@ export function AttachCard({
   attachedIds: string[];
   onAttach: (id: string) => Promise<void>;
   onDetach: (id: string) => Promise<void>;
+  onCreate?: (name: string) => Promise<{ id: string } | void>;
+  createLabel?: string;
 }) {
   const [pending, start] = useTransition();
-  const [filter, setFilter] = useState("");
+  const [open, setOpen] = useState(false);
   const attachedSet = new Set(attachedIds);
   const attached = available.filter((a) => attachedSet.has(a.id));
-  const others = available
-    .filter((a) => !attachedSet.has(a.id))
-    .filter((a) =>
-      filter ? `${a.label} ${a.sub ?? ""}`.toLowerCase().includes(filter.toLowerCase()) : true,
-    );
 
   return (
     <div className="rounded-2xl border bg-card text-card-foreground shadow-sm">
-      <div className="p-5 pb-3">
+      <div className="p-5 pb-3 flex items-center justify-between gap-2">
         <h3 className="text-base font-semibold flex items-center gap-2">
           {icon}
           {title}
         </h3>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs hover:bg-muted"
+        >
+          <Plus className="size-3.5" /> Add
+        </button>
       </div>
-      <div className="px-5 pb-5 space-y-3">
+      <div className="px-5 pb-5">
         {attached.length === 0 ? (
           <p className="text-sm text-muted-foreground">None attached.</p>
         ) : (
@@ -61,39 +68,19 @@ export function AttachCard({
             ))}
           </div>
         )}
-
-        {available.length > attached.length && (
-          <div className="space-y-2 pt-1">
-            {available.length > 6 && (
-              <input
-                placeholder="Filter…"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="w-full h-9 rounded-full border bg-background px-3 text-sm"
-              />
-            )}
-            <div className="flex flex-wrap gap-1.5">
-              {others.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No matches.</p>
-              ) : (
-                others.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    disabled={pending}
-                    onClick={() => start(() => onAttach(a.id))}
-                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs hover:bg-muted"
-                  >
-                    <Plus className="size-3" />
-                    {a.label}
-                    {a.sub && <span className="text-muted-foreground">· {a.sub}</span>}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      <EntityPicker
+        open={open}
+        onOpenChange={setOpen}
+        title={`Attach ${title.toLowerCase()}`}
+        items={available}
+        attachedIds={attachedIds}
+        onAttach={onAttach}
+        onDetach={onDetach}
+        onCreate={onCreate}
+        createLabel={createLabel ?? "Create"}
+      />
     </div>
   );
 }

@@ -93,6 +93,7 @@ export function Lightbox({
         <img
           src={img.url}
           alt={img.caption ?? ""}
+          decoding="async"
           className="max-w-[95vw] max-h-[85vh] object-contain rounded-2xl"
         />
       </div>

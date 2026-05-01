@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Pencil, Trash2, Check, X, Sparkles, Link2, ExternalLink, Plus } from "lucide-react";
+import { Pencil, Trash2, Check, X, Sparkles, Link2, ExternalLink, Plus, ShoppingCart, PackageCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney, cn } from "@/lib/utils";
 import type { OptionInput } from "@/lib/actions";
@@ -20,6 +20,7 @@ type Material = {
   quantity: string | null;
   isOpenChoice: boolean;
   chosenOptionId: string | null;
+  purchased: boolean;
   options: Option[];
 };
 
@@ -27,6 +28,7 @@ type Actions = {
   addMaterial: (input: { name: string; quantity?: string }) => Promise<void>;
   editMaterial: (id: string, input: { name: string; quantity?: string }) => Promise<void>;
   deleteMaterial: (id: string) => Promise<void>;
+  setPurchased: (id: string, purchased: boolean) => Promise<void>;
   addOption: (materialId: string, opt: OptionInput) => Promise<void>;
   editOption: (id: string, opt: OptionInput) => Promise<void>;
   deleteOption: (id: string) => Promise<void>;
@@ -34,15 +36,40 @@ type Actions = {
 };
 
 export function Materials({ materials, actions }: { materials: Material[]; actions: Actions }) {
+  const toBuy = materials.filter((m) => !m.purchased);
+  const onHand = materials.filter((m) => m.purchased);
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <AddMaterialBar onAdd={actions.addMaterial} />
       {materials.length === 0 && (
         <p className="text-sm text-muted-foreground">No materials yet.</p>
       )}
-      {materials.map((m) => (
-        <MaterialCard key={m.id} material={m} actions={actions} />
-      ))}
+      {materials.length > 0 && (
+        <>
+          <section className="space-y-3">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1.5">
+              <ShoppingCart className="size-3.5" /> To purchase
+              <span className="text-muted-foreground/70">({toBuy.length})</span>
+            </h3>
+            {toBuy.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nothing left to buy.</p>
+            ) : (
+              toBuy.map((m) => <MaterialCard key={m.id} material={m} actions={actions} />)
+            )}
+          </section>
+          <section className="space-y-3">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1.5">
+              <PackageCheck className="size-3.5" /> On hand
+              <span className="text-muted-foreground/70">({onHand.length})</span>
+            </h3>
+            {onHand.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nothing purchased yet.</p>
+            ) : (
+              onHand.map((m) => <MaterialCard key={m.id} material={m} actions={actions} />)
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 }
@@ -95,7 +122,7 @@ function MaterialCard({ material, actions }: { material: Material; actions: Acti
   const [adding, setAdding] = useState(false);
 
   return (
-    <div className="rounded-2xl bg-muted/40 p-4 space-y-3">
+    <div className={cn("rounded-2xl p-4 space-y-3", material.purchased ? "bg-pastel-mint/40" : "bg-muted/40")}>
       <div className="flex items-start justify-between gap-3">
         {editing ? (
           <div className="flex-1 space-y-2">
@@ -153,6 +180,20 @@ function MaterialCard({ material, actions }: { material: Material; actions: Acti
         )}
         {!editing && (
           <div className="flex gap-1 shrink-0">
+            <button
+              disabled={pending}
+              onClick={() => start(() => actions.setPurchased(material.id, !material.purchased))}
+              className={cn(
+                "size-8 rounded-full flex items-center justify-center",
+                material.purchased
+                  ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                  : "hover:bg-background text-muted-foreground",
+              )}
+              aria-label={material.purchased ? "Mark as to purchase" : "Mark as purchased"}
+              title={material.purchased ? "Mark as to purchase" : "Mark as purchased"}
+            >
+              {material.purchased ? <PackageCheck className="size-3.5" /> : <ShoppingCart className="size-3.5" />}
+            </button>
             <button
               onClick={() => setEditing(true)}
               className="size-8 rounded-full hover:bg-background flex items-center justify-center"

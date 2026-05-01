@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,25 +18,40 @@ import {
   addMaterialOption,
   addQuote,
   addTask,
+  attachActionContractor,
+  attachActionPersonnel,
   attachContractor,
   attachPersonnel,
+  attachTaskContractor,
+  attachTaskPersonnel,
   attachTool,
   chooseMaterialOption,
+  createContractor,
+  createPersonnel,
+  createTool,
   deleteAction,
   deleteEvent,
+  editEvent,
   deleteMaterial,
   deleteMaterialOption,
   deleteTask,
   deleteUpload,
+  detachActionContractor,
+  detachActionPersonnel,
   detachContractor,
   detachPersonnel,
+  detachTaskContractor,
+  detachTaskPersonnel,
   detachTool,
   editAction,
   editMaterial,
   editMaterialOption,
   editTask,
   generateAfterImageForProject,
+  setActionAssignee,
   setActionStatus,
+  setMaterialPurchased,
+  setTaskAssignee,
   setTaskStatus,
   setUploadKind,
   updateProjectStatus,
@@ -48,6 +63,7 @@ import { TaskRow } from "./_task-row";
 import { ActionRow } from "./_action-row";
 import { AttachCard } from "./_attach";
 import { Materials } from "./_materials";
+import { EventRow } from "./_event-row";
 import { ProjectImages } from "./_images";
 import { imageUrl } from "@/lib/storage";
 import {
@@ -57,7 +73,6 @@ import {
   Wrench,
   FileText,
   Calendar,
-  Trash2,
   Images,
 } from "lucide-react";
 
@@ -70,7 +85,6 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
     tasks,
     actions,
     materials,
-    options,
     events,
     pcs,
     pps,
@@ -78,11 +92,12 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
     allContractors,
     allPersonnel,
     allTools,
+    allUsers,
+    uploadRows,
   ] = await Promise.all([
     db.select().from(schema.tasks).where(eq(schema.tasks.projectId, id)).orderBy(schema.tasks.position),
     db.select().from(schema.actions).where(eq(schema.actions.projectId, id)),
     db.select().from(schema.materials).where(eq(schema.materials.projectId, id)),
-    db.select().from(schema.materialOptions),
     db.select().from(schema.events).where(eq(schema.events.projectId, id)).orderBy(schema.events.startsOn),
     db.select().from(schema.projectContractors).where(eq(schema.projectContractors.projectId, id)),
     db.select().from(schema.projectPersonnel).where(eq(schema.projectPersonnel.projectId, id)),
@@ -90,13 +105,37 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
     db.select().from(schema.contractors),
     db.select().from(schema.personnel),
     db.select().from(schema.tools),
+    db.select().from(schema.users),
+    db.select().from(schema.uploads).where(eq(schema.uploads.projectId, id)).orderBy(schema.uploads.createdAt),
   ]);
 
-  const uploadRows = await db
-    .select()
-    .from(schema.uploads)
-    .where(eq(schema.uploads.projectId, id))
-    .orderBy(schema.uploads.createdAt);
+  const taskIds = tasks.map((t) => t.id);
+  const actionIds = actions.map((a) => a.id);
+  const materialIds = materials.map((m) => m.id);
+
+  const [options, taskCs, taskPs, actionCs, actionPs, invoices, quotes] = await Promise.all([
+    materialIds.length
+      ? db.select().from(schema.materialOptions).where(inArray(schema.materialOptions.materialId, materialIds))
+      : Promise.resolve([] as (typeof schema.materialOptions.$inferSelect)[]),
+    taskIds.length
+      ? db.select().from(schema.taskContractors).where(inArray(schema.taskContractors.taskId, taskIds))
+      : Promise.resolve([] as (typeof schema.taskContractors.$inferSelect)[]),
+    taskIds.length
+      ? db.select().from(schema.taskPersonnel).where(inArray(schema.taskPersonnel.taskId, taskIds))
+      : Promise.resolve([] as (typeof schema.taskPersonnel.$inferSelect)[]),
+    actionIds.length
+      ? db.select().from(schema.actionContractors).where(inArray(schema.actionContractors.actionId, actionIds))
+      : Promise.resolve([] as (typeof schema.actionContractors.$inferSelect)[]),
+    actionIds.length
+      ? db.select().from(schema.actionPersonnel).where(inArray(schema.actionPersonnel.actionId, actionIds))
+      : Promise.resolve([] as (typeof schema.actionPersonnel.$inferSelect)[]),
+    taskIds.length
+      ? db.select().from(schema.invoices).where(inArray(schema.invoices.taskId, taskIds))
+      : Promise.resolve([] as (typeof schema.invoices.$inferSelect)[]),
+    taskIds.length
+      ? db.select().from(schema.quotes).where(inArray(schema.quotes.taskId, taskIds))
+      : Promise.resolve([] as (typeof schema.quotes.$inferSelect)[]),
+  ]);
   const projectImages = uploadRows
     .filter((u) => (u.contentType ?? "").startsWith("image/") || u.aiGenerated)
     .map((u) => ({
@@ -108,13 +147,8 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
       createdAt: u.createdAt.toISOString(),
     }));
 
-  const taskIds = tasks.map((t) => t.id);
-  const [invoices, quotes] = await Promise.all([
-    taskIds.length ? db.select().from(schema.invoices) : Promise.resolve([] as (typeof schema.invoices.$inferSelect)[]),
-    taskIds.length ? db.select().from(schema.quotes) : Promise.resolve([] as (typeof schema.quotes.$inferSelect)[]),
-  ]);
-  const projectInvoices = invoices.filter((i) => taskIds.includes(i.taskId));
-  const projectQuotes = quotes.filter((q) => taskIds.includes(q.taskId));
+  const projectInvoices = invoices;
+  const projectQuotes = quotes;
   const totalSpend = projectInvoices.reduce((sum, i) => sum + i.totalCents, 0);
 
   const optionsByMaterial = new Map<string, typeof options>();
@@ -129,6 +163,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
     quantity: m.quantity,
     isOpenChoice: m.isOpenChoice,
     chosenOptionId: m.chosenOptionId,
+    purchased: m.purchased,
     options: (optionsByMaterial.get(m.id) ?? []).map((o) => ({
       id: o.id,
       label: o.label,
@@ -142,6 +177,53 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
   const attachedContractorIds = pcs.map((x) => x.contractorId);
   const attachedPersonnelIds = pps.map((x) => x.personnelId);
   const attachedToolIds = pts.map((x) => x.toolId);
+
+  const contractorById = new Map(allContractors.map((c) => [c.id, c]));
+  const personnelById = new Map(allPersonnel.map((p) => [p.id, p]));
+
+  const taskContractorsByTask = new Map<string, string[]>();
+  for (const r of taskCs) {
+    const arr = taskContractorsByTask.get(r.taskId) ?? [];
+    arr.push(r.contractorId);
+    taskContractorsByTask.set(r.taskId, arr);
+  }
+  const taskPersonnelByTask = new Map<string, string[]>();
+  for (const r of taskPs) {
+    const arr = taskPersonnelByTask.get(r.taskId) ?? [];
+    arr.push(r.personnelId);
+    taskPersonnelByTask.set(r.taskId, arr);
+  }
+  const actionContractorsByAction = new Map<string, string[]>();
+  for (const r of actionCs) {
+    const arr = actionContractorsByAction.get(r.actionId) ?? [];
+    arr.push(r.contractorId);
+    actionContractorsByAction.set(r.actionId, arr);
+  }
+  const actionPersonnelByAction = new Map<string, string[]>();
+  for (const r of actionPs) {
+    const arr = actionPersonnelByAction.get(r.actionId) ?? [];
+    arr.push(r.personnelId);
+    actionPersonnelByAction.set(r.actionId, arr);
+  }
+
+  const directories = {
+    contractors: allContractors.map((c) => ({ id: c.id, label: c.name, sub: c.trade ?? undefined })),
+    personnel: allPersonnel.map((p) => ({ id: p.id, label: p.name, sub: p.relation ?? undefined })),
+    users: allUsers.map((u) => ({ id: u.id, label: u.name ?? u.email, sub: u.name ? u.email : undefined })),
+  };
+
+  function pickerItemsFor(ids: string[], kind: "contractor" | "personnel") {
+    if (kind === "contractor") {
+      return ids
+        .map((cid) => contractorById.get(cid))
+        .filter(Boolean)
+        .map((c) => ({ id: c!.id, label: c!.name, sub: c!.trade ?? undefined }));
+    }
+    return ids
+      .map((pid) => personnelById.get(pid))
+      .filter(Boolean)
+      .map((p) => ({ id: p!.id, label: p!.name, sub: p!.relation ?? undefined }));
+  }
 
   return (
     <div className="space-y-6">
@@ -226,24 +308,69 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
               <Button size="sm" type="submit">Add</Button>
             </form>
             {tasks.length === 0 && <p className="text-sm text-muted-foreground py-2">No subtasks yet.</p>}
-            {tasks.map((t) => (
-              <TaskRow
-                key={t.id}
-                task={{ id: t.id, title: t.title, description: t.description, status: t.status }}
-                onStatus={async (status: string) => {
-                  "use server";
-                  await setTaskStatus(t.id, status as never);
-                }}
-                onEdit={async (input: { title: string; description: string }) => {
-                  "use server";
-                  await editTask(t.id, input);
-                }}
-                onDelete={async () => {
-                  "use server";
-                  await deleteTask(t.id);
-                }}
-              />
-            ))}
+            {tasks.map((t) => {
+              const tCs = taskContractorsByTask.get(t.id) ?? [];
+              const tPs = taskPersonnelByTask.get(t.id) ?? [];
+              return (
+                <TaskRow
+                  key={t.id}
+                  task={{
+                    id: t.id,
+                    title: t.title,
+                    description: t.description,
+                    status: t.status,
+                    assigneeId: t.assigneeId,
+                  }}
+                  attachments={{
+                    contractors: pickerItemsFor(tCs, "contractor"),
+                    personnel: pickerItemsFor(tPs, "personnel"),
+                  }}
+                  directories={directories}
+                  onStatus={async (status: string) => {
+                    "use server";
+                    await setTaskStatus(t.id, status as never);
+                  }}
+                  onEdit={async (input: { title: string; description: string }) => {
+                    "use server";
+                    await editTask(t.id, input);
+                  }}
+                  onDelete={async () => {
+                    "use server";
+                    await deleteTask(t.id);
+                  }}
+                  onSetAssignee={async (uid: string | null) => {
+                    "use server";
+                    await setTaskAssignee(t.id, uid);
+                  }}
+                  onAttachContractor={async (cid: string) => {
+                    "use server";
+                    await attachTaskContractor(t.id, cid);
+                  }}
+                  onDetachContractor={async (cid: string) => {
+                    "use server";
+                    await detachTaskContractor(t.id, cid);
+                  }}
+                  onAttachPersonnel={async (pid: string) => {
+                    "use server";
+                    await attachTaskPersonnel(t.id, pid);
+                  }}
+                  onDetachPersonnel={async (pid: string) => {
+                    "use server";
+                    await detachTaskPersonnel(t.id, pid);
+                  }}
+                  onCreateContractor={async (name: string) => {
+                    "use server";
+                    const c = await createContractor({ name });
+                    return c ? { id: c.id } : undefined;
+                  }}
+                  onCreatePersonnel={async (name: string) => {
+                    "use server";
+                    const p = await createPersonnel({ name });
+                    return p ? { id: p.id } : undefined;
+                  }}
+                />
+              );
+            })}
           </CardContent>
         </Card>
 
@@ -266,24 +393,69 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
               <Button size="sm" type="submit">Add</Button>
             </form>
             {actions.length === 0 && <p className="text-sm text-muted-foreground py-2">No open actions.</p>}
-            {actions.map((a) => (
-              <ActionRow
-                key={a.id}
-                action={{ id: a.id, title: a.title, description: a.description, status: a.status }}
-                onStatus={async (status: string) => {
-                  "use server";
-                  await setActionStatus(a.id, status as never);
-                }}
-                onEdit={async (input: { title: string; description: string }) => {
-                  "use server";
-                  await editAction(a.id, input);
-                }}
-                onDelete={async () => {
-                  "use server";
-                  await deleteAction(a.id);
-                }}
-              />
-            ))}
+            {actions.map((a) => {
+              const aCs = actionContractorsByAction.get(a.id) ?? [];
+              const aPs = actionPersonnelByAction.get(a.id) ?? [];
+              return (
+                <ActionRow
+                  key={a.id}
+                  action={{
+                    id: a.id,
+                    title: a.title,
+                    description: a.description,
+                    status: a.status,
+                    assigneeId: a.assigneeId,
+                  }}
+                  attachments={{
+                    contractors: pickerItemsFor(aCs, "contractor"),
+                    personnel: pickerItemsFor(aPs, "personnel"),
+                  }}
+                  directories={directories}
+                  onStatus={async (status: string) => {
+                    "use server";
+                    await setActionStatus(a.id, status as never);
+                  }}
+                  onEdit={async (input: { title: string; description: string }) => {
+                    "use server";
+                    await editAction(a.id, input);
+                  }}
+                  onDelete={async () => {
+                    "use server";
+                    await deleteAction(a.id);
+                  }}
+                  onSetAssignee={async (uid: string | null) => {
+                    "use server";
+                    await setActionAssignee(a.id, uid);
+                  }}
+                  onAttachContractor={async (cid: string) => {
+                    "use server";
+                    await attachActionContractor(a.id, cid);
+                  }}
+                  onDetachContractor={async (cid: string) => {
+                    "use server";
+                    await detachActionContractor(a.id, cid);
+                  }}
+                  onAttachPersonnel={async (pid: string) => {
+                    "use server";
+                    await attachActionPersonnel(a.id, pid);
+                  }}
+                  onDetachPersonnel={async (pid: string) => {
+                    "use server";
+                    await detachActionPersonnel(a.id, pid);
+                  }}
+                  onCreateContractor={async (name: string) => {
+                    "use server";
+                    const c = await createContractor({ name });
+                    return c ? { id: c.id } : undefined;
+                  }}
+                  onCreatePersonnel={async (name: string) => {
+                    "use server";
+                    const p = await createPersonnel({ name });
+                    return p ? { id: p.id } : undefined;
+                  }}
+                />
+              );
+            })}
           </CardContent>
         </Card>
       </div>
@@ -309,6 +481,10 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
               deleteMaterial: async (mid) => {
                 "use server";
                 await deleteMaterial(mid);
+              },
+              setPurchased: async (mid, purchased) => {
+                "use server";
+                await setMaterialPurchased(mid, purchased);
               },
               addOption: async (mid, opt: OptionInput) => {
                 "use server";
@@ -373,28 +549,29 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
           </form>
           {events.length === 0 && <p className="text-sm text-muted-foreground">No events scheduled.</p>}
           {events.map((e) => (
-            <form
+            <EventRow
               key={e.id}
-              action={async () => {
+              event={{
+                id: e.id,
+                title: e.title,
+                startsOn: e.startsOn,
+                durationDays: e.durationDays,
+                notes: e.notes,
+              }}
+              onEdit={async (input) => {
+                "use server";
+                await editEvent(e.id, {
+                  title: input.title,
+                  startsOn: new Date(`${input.startsOn}T00:00:00Z`),
+                  durationDays: input.durationDays,
+                  notes: input.notes,
+                });
+              }}
+              onDelete={async () => {
                 "use server";
                 await deleteEvent(e.id);
               }}
-              className="rounded-2xl bg-muted/40 px-3 py-2 flex justify-between items-center gap-3"
-            >
-              <div className="min-w-0">
-                <div className="text-sm font-medium truncate">{e.title}</div>
-                <div className="text-xs text-muted-foreground">
-                  {formatDate(e.startsOn)} · {e.durationDays === 1 ? "all day" : `${e.durationDays} days`}
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="size-8 rounded-full hover:bg-destructive/10 text-destructive flex items-center justify-center shrink-0"
-                aria-label="Delete event"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            </form>
+            />
           ))}
         </CardContent>
       </Card>
@@ -403,7 +580,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
         <AttachCard
           title="Contractors"
           icon={<Hammer className="size-4 text-emerald-700" />}
-          available={allContractors.map((c) => ({ id: c.id, label: c.name, sub: c.trade ?? undefined }))}
+          available={directories.contractors}
           attachedIds={attachedContractorIds}
           onAttach={async (cid: string) => {
             "use server";
@@ -413,11 +590,17 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
             "use server";
             await detachContractor(project.id, cid);
           }}
+          onCreate={async (name: string) => {
+            "use server";
+            const c = await createContractor({ name });
+            return c ? { id: c.id } : undefined;
+          }}
+          createLabel="Create contractor"
         />
         <AttachCard
           title="People"
           icon={<UsersRound className="size-4 text-emerald-700" />}
-          available={allPersonnel.map((p) => ({ id: p.id, label: p.name, sub: p.relation ?? undefined }))}
+          available={directories.personnel}
           attachedIds={attachedPersonnelIds}
           onAttach={async (pid: string) => {
             "use server";
@@ -427,6 +610,12 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
             "use server";
             await detachPersonnel(project.id, pid);
           }}
+          onCreate={async (name: string) => {
+            "use server";
+            const p = await createPersonnel({ name });
+            return p ? { id: p.id } : undefined;
+          }}
+          createLabel="Create person"
         />
         <AttachCard
           title="Tools"
@@ -441,6 +630,12 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
             "use server";
             await detachTool(project.id, tid);
           }}
+          onCreate={async (name: string) => {
+            "use server";
+            const t = await createTool({ name });
+            return t ? { id: t.id } : undefined;
+          }}
+          createLabel="Create tool"
         />
       </div>
 

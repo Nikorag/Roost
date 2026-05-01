@@ -345,7 +345,7 @@ export function Wizard({ directory }: { directory: Directory }) {
               {beforeUpload ? (
                 <div className="relative size-40 rounded-2xl overflow-hidden border">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={beforeUpload.url} alt="" className="size-full object-cover" />
+                  <img src={beforeUpload.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
                   <button
                     type="button"
                     onClick={() => setBeforeUpload(null)}
@@ -415,7 +415,7 @@ export function Wizard({ directory }: { directory: Directory }) {
               {afterUpload && (
                 <div className="size-56 rounded-2xl overflow-hidden border mt-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={afterUpload.url} alt="" className="size-full object-cover" />
+                  <img src={afterUpload.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
                 </div>
               )}
             </div>

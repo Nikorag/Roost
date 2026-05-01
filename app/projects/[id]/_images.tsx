@@ -189,7 +189,7 @@ export function ProjectImages({
                     )}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={b.url} alt="" className="size-full object-cover" />
+                    <img src={b.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
                   </button>
                 ))}
                 <button
@@ -315,6 +315,7 @@ function ImageTile({
         alt={img.caption ?? ""}
         className="absolute inset-0 size-full object-cover"
         loading="lazy"
+        decoding="async"
       />
       {img.aiGenerated && (
         <Badge className="absolute top-2 left-2 bg-pastel-lilac text-purple-900">

@@ -76,16 +76,24 @@ export const projects = pgTable(
   (t) => ({ statusIdx: index("projects_status_idx").on(t.status) }),
 );
 
-export const tasks = pgTable("tasks", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  status: taskStatus("status").default("todo").notNull(),
-  position: integer("position").default(0).notNull(),
-  dueDate: timestamp("due_date", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    status: taskStatus("status").default("todo").notNull(),
+    position: integer("position").default(0).notNull(),
+    assigneeId: uuid("assignee_id").references(() => users.id, { onDelete: "set null" }),
+    dueDate: timestamp("due_date", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    projectIdx: index("tasks_project_idx").on(t.projectId),
+    assigneeIdx: index("tasks_assignee_idx").on(t.assigneeId),
+  }),
+);
 
 export const contractors = pgTable("contractors", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -158,23 +166,57 @@ export const taskContractors = pgTable(
   (t) => ({ pk: primaryKey({ columns: [t.taskId, t.contractorId] }) }),
 );
 
+export const taskPersonnel = pgTable(
+  "task_personnel",
+  {
+    taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+    personnelId: uuid("personnel_id").notNull().references(() => personnel.id, { onDelete: "cascade" }),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.taskId, t.personnelId] }) }),
+);
+
+export const actionContractors = pgTable(
+  "action_contractors",
+  {
+    actionId: uuid("action_id").notNull().references(() => actions.id, { onDelete: "cascade" }),
+    contractorId: uuid("contractor_id").notNull().references(() => contractors.id, { onDelete: "cascade" }),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.actionId, t.contractorId] }) }),
+);
+
+export const actionPersonnel = pgTable(
+  "action_personnel",
+  {
+    actionId: uuid("action_id").notNull().references(() => actions.id, { onDelete: "cascade" }),
+    personnelId: uuid("personnel_id").notNull().references(() => personnel.id, { onDelete: "cascade" }),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.actionId, t.personnelId] }) }),
+);
+
 /* ---------- materials ---------- */
 
-export const materials = pgTable("materials", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  quantity: text("quantity"),
-  notes: text("notes"),
-  /** When true the user is choosing between options below. */
-  isOpenChoice: boolean("is_open_choice").default(false).notNull(),
-  chosenOptionId: uuid("chosen_option_id"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const materials = pgTable(
+  "materials",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    quantity: text("quantity"),
+    notes: text("notes"),
+    /** When true the user is choosing between options below. */
+    isOpenChoice: boolean("is_open_choice").default(false).notNull(),
+    chosenOptionId: uuid("chosen_option_id"),
+    purchased: boolean("purchased").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ projectIdx: index("materials_project_idx").on(t.projectId) }),
+);
 
-export const materialOptions = pgTable("material_options", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  materialId: uuid("material_id").notNull().references(() => materials.id, { onDelete: "cascade" }),
+export const materialOptions = pgTable(
+  "material_options",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    materialId: uuid("material_id").notNull().references(() => materials.id, { onDelete: "cascade" }),
   /** Short label shown on chips, e.g. "Skimming Stone 2.5L" */
   label: text("label").notNull(),
   /** Where to buy from, e.g. "Wickes" */
@@ -182,65 +224,86 @@ export const materialOptions = pgTable("material_options", {
   /** Direct purchase URL */
   url: text("url"),
   priceCents: integer("price_cents"),
-  /** Free-text description / notes */
-  description: text("description"),
-});
+    /** Free-text description / notes */
+    description: text("description"),
+  },
+  (t) => ({ materialIdx: index("material_options_material_idx").on(t.materialId) }),
+);
 
 /* ---------- money ---------- */
 
-export const invoices = pgTable("invoices", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
-  contractorId: uuid("contractor_id").references(() => contractors.id, { onDelete: "set null" }),
-  vendor: text("vendor"),
-  reference: text("reference"),
-  totalCents: integer("total_cents").notNull(),
-  issuedOn: timestamp("issued_on", { withTimezone: true }),
-  paidOn: timestamp("paid_on", { withTimezone: true }),
-  uploadId: uuid("upload_id"),
-  notes: text("notes"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const invoices = pgTable(
+  "invoices",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+    contractorId: uuid("contractor_id").references(() => contractors.id, { onDelete: "set null" }),
+    vendor: text("vendor"),
+    reference: text("reference"),
+    totalCents: integer("total_cents").notNull(),
+    issuedOn: timestamp("issued_on", { withTimezone: true }),
+    paidOn: timestamp("paid_on", { withTimezone: true }),
+    uploadId: uuid("upload_id"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ taskIdx: index("invoices_task_idx").on(t.taskId) }),
+);
 
-export const quotes = pgTable("quotes", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
-  contractorId: uuid("contractor_id").references(() => contractors.id, { onDelete: "set null" }),
-  vendor: text("vendor"),
-  totalCents: integer("total_cents").notNull(),
-  validUntil: timestamp("valid_until", { withTimezone: true }),
-  accepted: boolean("accepted").default(false).notNull(),
-  uploadId: uuid("upload_id"),
-  notes: text("notes"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const quotes = pgTable(
+  "quotes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+    contractorId: uuid("contractor_id").references(() => contractors.id, { onDelete: "set null" }),
+    vendor: text("vendor"),
+    totalCents: integer("total_cents").notNull(),
+    validUntil: timestamp("valid_until", { withTimezone: true }),
+    accepted: boolean("accepted").default(false).notNull(),
+    uploadId: uuid("upload_id"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ taskIdx: index("quotes_task_idx").on(t.taskId) }),
+);
 
 /* ---------- actions (assigned todos) ---------- */
 
-export const actions = pgTable("actions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  status: actionStatus("status").default("open").notNull(),
-  assigneeId: uuid("assignee_id").references(() => users.id, { onDelete: "set null" }),
-  dueDate: timestamp("due_date", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const actions = pgTable(
+  "actions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    status: actionStatus("status").default("open").notNull(),
+    assigneeId: uuid("assignee_id").references(() => users.id, { onDelete: "set null" }),
+    dueDate: timestamp("due_date", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    projectIdx: index("actions_project_idx").on(t.projectId),
+    assigneeIdx: index("actions_assignee_idx").on(t.assigneeId),
+  }),
+);
 
 /* ---------- events + calendar ---------- */
 
-export const events = pgTable("events", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  notes: text("notes"),
-  /** Date the event starts. Always treated as all-day; no time component. */
-  startsOn: timestamp("starts_on", { withTimezone: true }).notNull(),
-  /** Length of the event in days (>=1). */
-  durationDays: integer("duration_days").default(1).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const events = pgTable(
+  "events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    notes: text("notes"),
+    /** Date the event starts. Always treated as all-day; no time component. */
+    startsOn: timestamp("starts_on", { withTimezone: true }).notNull(),
+    /** Length of the event in days (>=1). */
+    durationDays: integer("duration_days").default(1).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ projectIdx: index("events_project_idx").on(t.projectId) }),
+);
 
 export const eventLinks = pgTable(
   "event_links",
@@ -255,24 +318,31 @@ export const eventLinks = pgTable(
 
 /* ---------- uploads ---------- */
 
-export const uploads = pgTable("uploads", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
-  taskId: uuid("task_id").references(() => tasks.id, { onDelete: "cascade" }),
-  bucket: text("bucket").notNull(),
-  objectKey: text("object_key").notNull(),
-  contentType: text("content_type"),
-  sizeBytes: integer("size_bytes"),
-  originalName: text("original_name"),
-  /** before / progress / after / other */
-  kind: imageKind("kind").default("other").notNull(),
-  /** Free-text caption */
-  caption: text("caption"),
-  /** When true, this image was AI-generated (e.g. predicted "after"). */
-  aiGenerated: boolean("ai_generated").default(false).notNull(),
-  uploadedBy: uuid("uploaded_by").references(() => users.id, { onDelete: "set null" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const uploads = pgTable(
+  "uploads",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    taskId: uuid("task_id").references(() => tasks.id, { onDelete: "cascade" }),
+    bucket: text("bucket").notNull(),
+    objectKey: text("object_key").notNull(),
+    contentType: text("content_type"),
+    sizeBytes: integer("size_bytes"),
+    originalName: text("original_name"),
+    /** before / progress / after / other */
+    kind: imageKind("kind").default("other").notNull(),
+    /** Free-text caption */
+    caption: text("caption"),
+    /** When true, this image was AI-generated (e.g. predicted "after"). */
+    aiGenerated: boolean("ai_generated").default(false).notNull(),
+    uploadedBy: uuid("uploaded_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    projectIdx: index("uploads_project_idx").on(t.projectId),
+    taskIdx: index("uploads_task_idx").on(t.taskId),
+  }),
+);
 
 /* ---------- relations ---------- */
 
