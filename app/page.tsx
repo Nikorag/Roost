@@ -159,7 +159,7 @@ async function pickHeroImages(projectIds: string[]): Promise<Map<string, string>
       // Newest first within the same kind.
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
-    out.set(pid, imageUrl(arr[0].id));
+    out.set(pid, imageUrl(arr[0].objectKey));
   }
   return out;
 }

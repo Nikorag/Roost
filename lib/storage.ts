@@ -62,9 +62,9 @@ export function publicObjectUrl(objectKey: string) {
   return `https://storage.googleapis.com/${bucketName()}/${objectKey}`;
 }
 
-/** Stable, auth-gated URL that streams the upload via our /api/image route. */
-export function imageUrl(uploadId: string) {
-  return `/api/image/${uploadId}`;
+/** Direct public GCS URL — bucket is configured with allUsers:objectViewer. */
+export function imageUrl(objectKey: string) {
+  return publicObjectUrl(objectKey);
 }
 
 export async function uploadBytes(opts: {

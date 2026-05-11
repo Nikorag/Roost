@@ -140,7 +140,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
     .filter((u) => (u.contentType ?? "").startsWith("image/") || u.aiGenerated)
     .map((u) => ({
       id: u.id,
-      url: imageUrl(u.id),
+      url: imageUrl(u.objectKey),
       kind: u.kind,
       caption: u.caption,
       aiGenerated: u.aiGenerated,

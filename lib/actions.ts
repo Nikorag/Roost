@@ -704,5 +704,5 @@ export async function generateAfterImageForProject(input: {
     .returning();
 
   if (input.projectId) revalidatePath(`/projects/${input.projectId}`);
-  return { uploadId: row.id, url: imageUrl(row.id) };
+  return { uploadId: row.id, url: imageUrl(row.objectKey) };
 }

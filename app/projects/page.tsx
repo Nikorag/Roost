@@ -150,7 +150,7 @@ async function pickHeroImages(projectIds: string[]): Promise<Map<string, string>
       if (pa !== pb) return pa - pb;
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
-    out.set(pid, imageUrl(arr[0].id));
+    out.set(pid, imageUrl(arr[0].objectKey));
   }
   return out;
 }
