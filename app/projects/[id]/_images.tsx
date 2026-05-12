@@ -19,6 +19,7 @@ export type ProjectImage = {
 type Actions = {
   setKind: (uploadId: string, kind: ProjectImage["kind"]) => Promise<void>;
   remove: (uploadId: string) => Promise<void>;
+  setAi: (uploadId: string, aiGenerated: boolean) => Promise<void>;
   generateAfter: (input: { prompt: string; basedOnUploadId?: string }) => Promise<{
     uploadId: string;
     url: string;
@@ -255,6 +256,7 @@ export function ProjectImages({
                       }
                       onSetKind={(kind) => start(() => actions.setKind(img.id, kind))}
                       onDelete={() => start(() => actions.remove(img.id))}
+                      onToggleAi={() => start(() => actions.setAi(img.id, !img.aiGenerated))}
                     />
                   ))}
                 </div>
@@ -276,6 +278,11 @@ export function ProjectImages({
           index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onIndex={setLightboxIndex}
+          actions={{
+            setKind: (uploadId, kind) => actions.setKind(uploadId, kind),
+            setAi: (uploadId, ai) => actions.setAi(uploadId, ai),
+            remove: (uploadId) => actions.remove(uploadId),
+          }}
         />
       )}
     </div>
@@ -288,12 +295,14 @@ function ImageTile({
   onOpen,
   onSetKind,
   onDelete,
+  onToggleAi,
 }: {
   img: ProjectImage;
   pending: boolean;
   onOpen: () => void;
   onSetKind: (kind: ProjectImage["kind"]) => void;
   onDelete: () => void;
+  onToggleAi: () => void;
 }) {
   return (
     <div
@@ -315,10 +324,35 @@ function ImageTile({
         wrapperClassName="absolute inset-0 size-full"
         className="size-full object-cover"
       />
-      {img.aiGenerated && (
-        <Badge className="absolute top-2 left-2 bg-pastel-lilac text-purple-900">
-          <Sparkles className="size-3 mr-1" /> AI
-        </Badge>
+      {img.aiGenerated ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (confirm("Unmark this image as AI-generated?")) onToggleAi();
+          }}
+          className="absolute top-2 left-2"
+          aria-label="Unmark as AI"
+        >
+          <Badge className="bg-pastel-lilac text-purple-900 cursor-pointer">
+            <Sparkles className="size-3 mr-1" /> AI
+          </Badge>
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleAi();
+          }}
+          className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-white/90 px-2 py-0.5 text-[11px] inline-flex items-center gap-1 text-purple-900"
+          aria-label="Mark as AI"
+          title="Mark as AI-generated"
+        >
+          <Sparkles className="size-3" /> Mark AI
+        </button>
       )}
       <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="flex items-center justify-between gap-1">

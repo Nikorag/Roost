@@ -54,6 +54,7 @@ import {
   setTaskAssignee,
   setTaskStatus,
   setUploadKind,
+  setUploadAiGenerated,
   updateProjectStatus,
   type OptionInput,
 } from "@/lib/actions";
@@ -274,6 +275,10 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
               remove: async (uploadId: string) => {
                 "use server";
                 await deleteUpload(uploadId);
+              },
+              setAi: async (uploadId: string, aiGenerated: boolean) => {
+                "use server";
+                await setUploadAiGenerated(uploadId, aiGenerated);
               },
               generateAfter: async (input: { prompt: string; basedOnUploadId?: string }) => {
                 "use server";

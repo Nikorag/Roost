@@ -642,6 +642,16 @@ export async function setUploadKind(
   if (row?.projectId) revalidatePath(`/projects/${row.projectId}`);
 }
 
+export async function setUploadAiGenerated(uploadId: string, aiGenerated: boolean) {
+  await requireUser();
+  const [row] = await db
+    .update(schema.uploads)
+    .set({ aiGenerated })
+    .where(eq(schema.uploads.id, uploadId))
+    .returning();
+  if (row?.projectId) revalidatePath(`/projects/${row.projectId}`);
+}
+
 export async function deleteUpload(uploadId: string) {
   await requireUser();
   const [row] = await db.delete(schema.uploads).where(eq(schema.uploads.id, uploadId)).returning();
