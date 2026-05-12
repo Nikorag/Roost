@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { STATUS_LABEL, STATUS_TINT, formatDate } from "@/lib/utils";
-import { desc, eq, inArray, ne } from "drizzle-orm";
+import { asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { imageUrl } from "@/lib/storage";
 import { IMAGE_KIND_PRIORITY } from "@/lib/utils";
@@ -20,7 +20,12 @@ export default async function Dashboard() {
       .orderBy(desc(schema.projects.updatedAt))
       .limit(6),
     db.select().from(schema.actions).where(eq(schema.actions.status, "open")).limit(6),
-    db.select().from(schema.events).orderBy(schema.events.startsOn).limit(5),
+    db
+      .select()
+      .from(schema.events)
+      .where(sql`${schema.events.startsOn} + (${schema.events.durationDays} || ' days')::interval > now()`)
+      .orderBy(asc(schema.events.startsOn))
+      .limit(5),
   ]);
 
   const heroByProject = await pickHeroImages(projects.map((p) => p.id));
