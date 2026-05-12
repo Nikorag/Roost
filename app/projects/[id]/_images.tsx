@@ -130,25 +130,29 @@ export function ProjectImages({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground">Add as</span>
-        {KINDS.map((k) => (
-          <button
-            key={k.value}
-            type="button"
-            onClick={() => {
-              setPendingKind(k.value);
-              fileInput.current?.click();
-            }}
-            className={cn(
-              "rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1 border",
-              pendingKind === k.value ? k.tint + " border-transparent" : "hover:bg-muted",
-            )}
-          >
-            <ImagePlus className="size-3.5" />
-            {k.label}
-          </button>
-        ))}
+      <div className="space-y-2">
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-sm text-muted-foreground">Add as</span>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {KINDS.map((k) => (
+              <button
+                key={k.value}
+                type="button"
+                onClick={() => {
+                  setPendingKind(k.value);
+                  fileInput.current?.click();
+                }}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1 border",
+                  pendingKind === k.value ? k.tint + " border-transparent" : "hover:bg-muted",
+                )}
+              >
+                <ImagePlus className="size-3.5" />
+                {k.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <input
           ref={fileInput}
           type="file"
@@ -160,14 +164,16 @@ export function ProjectImages({
             e.target.value = "";
           }}
         />
-        <button
-          type="button"
-          onClick={() => setGenOpen((o) => !o)}
-          className="ml-auto rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1 bg-pastel-lilac text-purple-900"
-        >
-          <Wand2 className="size-3.5" />
-          Generate after image
-        </button>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setGenOpen((o) => !o)}
+            className="rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1 bg-pastel-lilac text-purple-900"
+          >
+            <Wand2 className="size-3.5" />
+            Generate after image
+          </button>
+        </div>
       </div>
 
       {genOpen && (
