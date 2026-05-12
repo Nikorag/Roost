@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Sidebar, MobileNav } from "@/components/sidebar";
+import { RouteProgress } from "@/components/route-progress";
 import { auth } from "@/lib/auth";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -25,6 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-dvh">
+        <RouteProgress />
         {session?.user ? (
           <>
             <Sidebar userName={session.user.name ?? session.user.email} />
