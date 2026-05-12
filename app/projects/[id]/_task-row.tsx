@@ -61,14 +61,14 @@ export function TaskRow({
 
   return (
     <div className="rounded-2xl bg-muted/40 px-3 py-2 space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="min-w-0 flex-1 basis-full sm:basis-0">
           <div className="text-sm truncate">{task.title}</div>
           {task.description && (
             <div className="text-xs text-muted-foreground line-clamp-2">{task.description}</div>
           )}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0 max-w-full">
           <select
             value={task.assigneeId ?? ""}
             disabled={pending}
@@ -76,7 +76,7 @@ export function TaskRow({
               const v = e.currentTarget.value;
               start(() => onSetAssignee(v || null));
             }}
-            className="text-xs rounded-full border bg-background px-2 py-1 max-w-[8rem]"
+            className="text-xs rounded-full border bg-background px-2 py-1 max-w-[6.5rem] sm:max-w-[8rem] min-w-0"
             title="Assignee"
           >
             <option value="">Unassigned</option>
