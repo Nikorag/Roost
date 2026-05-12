@@ -13,7 +13,7 @@ import {
   formatDate,
 } from "@/lib/utils";
 import { imageUrl } from "@/lib/storage";
-import { Plus } from "lucide-react";
+import { Plus, Home } from "lucide-react";
 
 export default async function ProjectsPage({
   searchParams,
@@ -74,17 +74,19 @@ export default async function ProjectsPage({
           {rows.map((p) => (
             <Link key={p.id} href={`/projects/${p.id}`}>
               <Card className="hover:shadow-md transition-shadow h-full overflow-hidden">
-                {heroByProject.get(p.id) && (
-                  <div className="aspect-[16/9] bg-muted overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                <div className="aspect-[16/9] bg-muted overflow-hidden flex items-center justify-center">
+                  {heroByProject.get(p.id) ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={heroByProject.get(p.id)!}
                       alt=""
                       className="size-full object-cover"
                       loading="lazy"
                     />
-                  </div>
-                )}
+                  ) : (
+                    <Home className="size-10 text-muted-foreground/40" strokeWidth={1.5} />
+                  )}
+                </div>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <Badge className={STATUS_TINT[p.status]}>{STATUS_LABEL[p.status]}</Badge>
