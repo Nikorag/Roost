@@ -1,5 +1,3 @@
-import ical from "node-ical";
-
 export type CalendarEvent = {
   date: string; // YYYY-MM-DD (start)
   end?: string; // YYYY-MM-DD (end, exclusive — only set for multi-day)
@@ -49,6 +47,10 @@ async function fetchAllEvents(url: string): Promise<CalendarEvent[]> {
     return [];
   }
 
+  // Loaded lazily — node-ical pulls in moment-timezone/rrule, which fail to
+  // evaluate during Next's "Collecting page data" step on Vercel if imported
+  // at module load.
+  const ical = await import("node-ical");
   const parsed = ical.sync.parseICS(body);
   const events: CalendarEvent[] = [];
   type VEvent = {
