@@ -48,7 +48,7 @@ export function PlanSuggester({ weekStartIso }: { weekStartIso: string }) {
       </Button>
 
       {open && (
-        <div className="fixed inset-0 z-40 flex items-end md:items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40">
           <Card className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl max-h-[85vh] flex flex-col">
             <CardContent className="p-4 flex flex-col gap-3 overflow-hidden">
               <div className="flex items-center justify-between">
