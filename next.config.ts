@@ -8,10 +8,6 @@ const config: NextConfig = {
   },
   // Allow dev access from LAN devices (e.g. testing on a phone).
   allowedDevOrigins: ["192.168.1.39"],
-  // node-ical pulls in moment-timezone / rrule which break when bundled by
-  // webpack on Vercel ("g.BigInt is not a function"). Letting Node require
-  // them natively at runtime avoids the bundler's rewrite.
-  serverExternalPackages: ["node-ical", "moment-timezone", "rrule"],
   experimental: {
     serverActions: { bodySizeLimit: "20mb" },
     // nodeMiddleware is recognized at runtime but not yet typed.
