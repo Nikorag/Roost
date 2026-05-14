@@ -62,7 +62,7 @@ export function Sidebar({ userName }: { userName?: string | null }) {
       <div className="px-3 pb-5 pt-3 border-t mx-3">
         <div className="px-2 py-2 text-xs text-muted-foreground truncate">{userName ?? "Signed in"}</div>
         <Link
-          href="/settings/ai"
+          href="/settings"
           className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm text-foreground/70 hover:bg-muted"
         >
           <Settings className="size-4" />

@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AI_PROMPT_KEYS, getAllPromptAdditions } from "@/lib/ai-settings";
 import { AiPromptsClient } from "./ai-prompts-client";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +10,12 @@ export default async function AiSettingsPage() {
   const current = await getAllPromptAdditions();
   return (
     <div className="space-y-4">
+      <Link
+        href="/settings"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ChevronLeft className="size-4" /> Settings
+      </Link>
       <header>
         <h1 className="text-2xl font-semibold">AI prompts</h1>
         <p className="text-sm text-muted-foreground">

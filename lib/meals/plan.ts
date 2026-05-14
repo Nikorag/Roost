@@ -25,6 +25,7 @@ export type PlanContext = {
   takeawayCountLast14d: number;
   mealieCandidates: PlanCandidate[];
   takeawayCandidates: PlanCandidate[];
+  calendarEvents?: { date: string; summary: string; time?: string; allDay: boolean }[];
 };
 
 const SYSTEM = `You build a weekly dinner plan for one household.
@@ -41,6 +42,8 @@ const SYSTEM = `You build a weekly dinner plan for one household.
 - Lean on pantry ingredients where it overlaps with a candidate's typical recipe.
 - If they've ordered lots of takeaways recently, prefer cooking; otherwise 1 takeaway/week is fine.
 - Days already planned should be returned as-is with kind="skip" (don't overwrite).
+- If the family calendar shows a busy/late event on a day, prefer quick or
+  prep-ahead meals (or a takeaway) for that day. Reflect this in the "reason".
 
 # Output
 Return strict JSON only, matching:
@@ -79,7 +82,16 @@ Takeaways in last 14d: ${ctx.takeawayCountLast14d}
 ${ctx.mealieCandidates.map((c) => `${c.id} — ${c.name}`).join("\n") || "(none)"}
 
 # Takeaway candidates (id — name)
-${ctx.takeawayCandidates.map((c) => `${c.id} — ${c.name}`).join("\n") || "(none)"}`;
+${ctx.takeawayCandidates.map((c) => `${c.id} — ${c.name}`).join("\n") || "(none)"}
+
+# Family calendar (events during this plan window)
+${
+  ctx.calendarEvents && ctx.calendarEvents.length
+    ? ctx.calendarEvents
+        .map((e) => `- ${e.date}${e.allDay ? " (all-day)" : e.time ? ` ${e.time}` : ""}: ${e.summary}`)
+        .join("\n")
+    : "(none — no calendar connected or nothing scheduled)"
+}`;
 
   try {
     const res = await model.generateContent(prompt);

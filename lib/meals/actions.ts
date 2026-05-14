@@ -7,6 +7,8 @@ import { createRecipe, getRecipe, listPlannableRecipes, uploadRecipeImage } from
 import { and, desc, eq, gte, lt } from "drizzle-orm";
 import { suggestWeeklyPlan, type PlanPick } from "./plan";
 import { shoppingWeekStart } from "./shopping";
+import { getSetting, SETTING_KEYS } from "@/lib/app-settings";
+import { fetchEventsInRange } from "@/lib/external-calendar";
 import { generateShoppingListForWeek, normalizeName, normalizeUnit, startOfWeek } from "./shopping";
 
 type MealSlot = "breakfast" | "lunch" | "dinner";
@@ -471,6 +473,9 @@ export async function suggestWeeklyPlanAction(weekStartIso: string): Promise<Pla
   }
   recentMeals.sort((a, b) => (a.date < b.date ? 1 : -1));
 
+  const calIcsUrl = await getSetting(SETTING_KEYS.googleCalendarIcs);
+  const calendarEvents = calIcsUrl ? await fetchEventsInRange(calIcsUrl, weekStart, weekEnd) : [];
+
   return suggestWeeklyPlan({
     weekDates,
     alreadyPlanned,
@@ -481,6 +486,12 @@ export async function suggestWeeklyPlanAction(weekStartIso: string): Promise<Pla
       pastPlanned.filter((p) => p.source === "takeaway").length,
     mealieCandidates: mealieRecipes.map((r) => ({ kind: "mealie", id: r.id, name: r.name })),
     takeawayCandidates: takeawayRows.map((t) => ({ kind: "takeaway", id: t.id, name: t.name })),
+    calendarEvents: calendarEvents.map((e) => ({
+      date: e.date,
+      summary: e.summary,
+      time: e.time,
+      allDay: e.allDay,
+    })),
   });
 }
 

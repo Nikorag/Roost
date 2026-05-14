@@ -4,6 +4,8 @@ import { db, schema } from "@/lib/db";
 import { and, desc, gte, inArray, lt } from "drizzle-orm";
 import { streamMealSuggestion, type ChatMessage, type SuggestionContext } from "@/lib/meals/ai";
 import { listAllRecipes, mealieConfigured } from "@/lib/mealie/client";
+import { getSetting, SETTING_KEYS } from "@/lib/app-settings";
+import { fetchEventsInRange } from "@/lib/external-calendar";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -54,6 +56,8 @@ export async function POST(req: Request) {
   const pantry = await db.select().from(schema.pantryItems);
   const takeaways = await db.select().from(schema.takeawayMeals);
   const mealieLibrary = mealieConfigured() ? await listAllRecipes() : [];
+  const calIcsUrl = await getSetting(SETTING_KEYS.googleCalendarIcs);
+  const calendarEvents = calIcsUrl ? await fetchEventsInRange(calIcsUrl, today, weekEnd) : [];
 
   // Hydrate mealie names from the local cache where available.
   const mealieIds = Array.from(
@@ -114,6 +118,12 @@ export async function POST(req: Request) {
     takeawayCountLast14d,
     mealieLibrary: mealieLibrary.map((r) => ({ name: r.name, description: r.description ?? null })),
     takeawayLibrary: takeaways.map((t) => ({ name: t.name, vendor: t.vendor })),
+    calendarEvents: calendarEvents.map((e) => ({
+      date: e.date,
+      summary: e.summary,
+      time: e.time,
+      allDay: e.allDay,
+    })),
   };
 
   const stream = await streamMealSuggestion(messages, ctx);

@@ -10,6 +10,7 @@ export type SuggestionContext = {
   takeawayCountLast14d: number;
   mealieLibrary: { name: string; description: string | null }[];
   takeawayLibrary: { name: string; vendor: string | null }[];
+  calendarEvents?: { date: string; summary: string; time?: string; allDay: boolean }[];
 };
 
 const SYSTEM_PROMPT = `You are a warm, practical household meal-planning helper.
@@ -36,7 +37,10 @@ to add something, rather than guessing.
   just because they were eaten recently. If something still fits, suggest it.
 - Favour recipes whose typical ingredients overlap with the pantry list.
 - If they've ordered a lot of takeaways recently, gently lean toward cooking.
-- Mark takeaway picks with 🥡 and recipes with 🍲 so they're easy to spot.`;
+- Mark takeaway picks with 🥡 and recipes with 🍲 so they're easy to spot.
+- If the family calendar shows busy/late events tonight (or on the day in
+  question), lean toward quick or prep-ahead meals. Mention the calendar event
+  briefly in your reasoning ("you've got football at 6, so…").`;
 
 function fmtContext(ctx: SuggestionContext): string {
   const lines: string[] = [];
@@ -85,6 +89,14 @@ function fmtContext(ctx: SuggestionContext): string {
   );
   lines.push("");
   lines.push(`## Takeaways ordered in last 14d: ${ctx.takeawayCountLast14d}`);
+  if (ctx.calendarEvents && ctx.calendarEvents.length) {
+    lines.push("");
+    lines.push("## Family calendar (next 7 days)");
+    for (const e of ctx.calendarEvents) {
+      const when = e.allDay ? "all-day" : e.time ?? "";
+      lines.push(`- ${e.date}${when ? ` ${when}` : ""}: ${e.summary}`);
+    }
+  }
   return lines.join("\n");
 }
 

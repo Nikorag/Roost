@@ -400,6 +400,13 @@ export const aiPromptSettings = pgTable("ai_prompt_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** Generic household-level key/value settings (calendar URLs, integrations, etc). */
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull().default(""),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /* ---------- meals ---------- */
 
 export const takeawayMeals = pgTable("takeaway_meals", {
