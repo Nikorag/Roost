@@ -156,6 +156,48 @@ JSON only.`;
   }
 }
 
+/**
+ * Suggest a single emoji that best represents a takeaway meal. Falls back to
+ * 🥡 if the API isn't configured or the response is unusable.
+ */
+export async function suggestTakeawayEmoji(input: {
+  name: string;
+  vendor?: string | null;
+  notes?: string | null;
+}): Promise<string> {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (!apiKey) return "🥡";
+  const genai = new GoogleGenerativeAI(apiKey);
+  const model = genai.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    generationConfig: { responseMimeType: "application/json" },
+  });
+  const prompt = `Pick one single emoji that best represents this takeaway meal.
+Name: ${input.name}
+Vendor: ${input.vendor ?? ""}
+Notes: ${input.notes ?? ""}
+
+Rules:
+- Return exactly one emoji glyph, never multiple.
+- Prefer food/cuisine over packaging. Avoid 🥡 unless it's literally a generic Chinese takeaway in a box.
+- Examples: pizza → 🍕, sushi → 🍣, burger → 🍔, kebab → 🥙, curry → 🍛, fish and chips → 🍟, ramen → 🍜, taco → 🌮, fried chicken → 🍗.
+
+Return strict JSON: {"emoji": "<one emoji>"}.`;
+  try {
+    const res = await model.generateContent(prompt);
+    const json = JSON.parse(res.response.text()) as { emoji?: string };
+    const raw = (json.emoji ?? "").trim();
+    // Take the first grapheme so multi-emoji answers still produce a single glyph.
+    const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+    const first = segmenter.segment(raw)[Symbol.iterator]().next().value as
+      | { segment: string }
+      | undefined;
+    return first?.segment || "🥡";
+  } catch {
+    return "🥡";
+  }
+}
+
 export type WizardSuggestion = {
   tasks: { title: string; description?: string }[];
   contractors: { trade: string; reason: string }[];

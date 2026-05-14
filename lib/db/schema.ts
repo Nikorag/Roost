@@ -46,6 +46,20 @@ export const eventLinkKind = pgEnum("event_link_kind", [
 
 export const imageKind = pgEnum("image_kind", ["before", "progress", "after", "other"]);
 
+export const mealSource = pgEnum("meal_source", ["mealie", "takeaway", "adhoc"]);
+export const mealSlot = pgEnum("meal_slot", ["breakfast", "lunch", "dinner"]);
+export const pantryUnit = pgEnum("pantry_unit", [
+  "g",
+  "kg",
+  "ml",
+  "l",
+  "pcs",
+  "tbsp",
+  "tsp",
+  "cup",
+  "other",
+]);
+
 /* ---------- core ---------- */
 
 export const users = pgTable("users", {
@@ -376,4 +390,138 @@ export const materialOptionRelations = relations(materialOptions, ({ one }) => (
 export const eventRelations = relations(events, ({ many, one }) => ({
   project: one(projects, { fields: [events.projectId], references: [projects.id] }),
   links: many(eventLinks),
+}));
+
+/* ---------- meals ---------- */
+
+export const takeawayMeals = pgTable("takeaway_meals", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  vendor: text("vendor"),
+  notes: text("notes"),
+  /** Single-glyph emoji used as the icon for this takeaway. AI-suggested at create. */
+  emoji: text("emoji"),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Light cache of Mealie recipe metadata so we don't refetch for list views. */
+export const mealieRecipes = pgTable("mealie_recipes", {
+  /** Mealie's own id (uuid or slug; we treat as opaque text). */
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url"),
+  /** JSON cache of the last-known recipe payload — used to avoid re-fetching ingredients. */
+  payload: jsonb("payload"),
+  lastFetchedAt: timestamp("last_fetched_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const mealPlanEntries = pgTable(
+  "meal_plan_entries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    /** All-day date (stored as timestamp, only the date portion is meaningful). */
+    date: timestamp("date", { withTimezone: true }).notNull(),
+    slot: mealSlot("slot").default("dinner").notNull(),
+    source: mealSource("source").notNull(),
+    mealieRecipeId: text("mealie_recipe_id"),
+    takeawayMealId: uuid("takeaway_meal_id").references(() => takeawayMeals.id, {
+      onDelete: "set null",
+    }),
+    /** Used when source = 'adhoc' (leftovers, freeform). */
+    adhocName: text("adhoc_name"),
+    notes: text("notes"),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    dateIdx: index("meal_plan_date_idx").on(t.date),
+    slotIdx: index("meal_plan_slot_idx").on(t.slot),
+  }),
+);
+
+export const pantryItems = pgTable(
+  "pantry_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    /** Normalized lowercase key used for de-duplication and shopping-list matching. */
+    nameKey: text("name_key").notNull(),
+    displayName: text("display_name").notNull(),
+    quantity: numeric("quantity"),
+    unit: pantryUnit("unit"),
+    expiresOn: timestamp("expires_on", { withTimezone: true }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ nameIdx: index("pantry_name_idx").on(t.nameKey) }),
+);
+
+export const mealHistory = pgTable(
+  "meal_history",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    eatenOn: timestamp("eaten_on", { withTimezone: true }).notNull(),
+    source: mealSource("source").notNull(),
+    mealieRecipeId: text("mealie_recipe_id"),
+    takeawayMealId: uuid("takeaway_meal_id").references(() => takeawayMeals.id, {
+      onDelete: "set null",
+    }),
+    adhocName: text("adhoc_name"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ eatenIdx: index("meal_history_eaten_idx").on(t.eatenOn) }),
+);
+
+export const shoppingLists = pgTable(
+  "shopping_lists",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    /** Monday of the week the list covers. */
+    weekStart: timestamp("week_start", { withTimezone: true }).notNull(),
+    generatedAt: timestamp("generated_at", { withTimezone: true }).defaultNow().notNull(),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  },
+  (t) => ({ weekIdx: index("shopping_list_week_idx").on(t.weekStart) }),
+);
+
+export const shoppingListItems = pgTable(
+  "shopping_list_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    shoppingListId: uuid("shopping_list_id")
+      .notNull()
+      .references(() => shoppingLists.id, { onDelete: "cascade" }),
+    nameKey: text("name_key").notNull(),
+    displayName: text("display_name").notNull(),
+    quantity: numeric("quantity"),
+    unit: pantryUnit("unit"),
+    /** Mealie recipe IDs (and/or 'manual') that contributed to this line. */
+    sources: jsonb("sources"),
+    checked: boolean("checked").default(false).notNull(),
+    manuallyAdded: boolean("manually_added").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ listIdx: index("shopping_list_items_list_idx").on(t.shoppingListId) }),
+);
+
+export const mealPlanRelations = relations(mealPlanEntries, ({ one }) => ({
+  takeaway: one(takeawayMeals, {
+    fields: [mealPlanEntries.takeawayMealId],
+    references: [takeawayMeals.id],
+  }),
+}));
+
+export const shoppingListRelations = relations(shoppingLists, ({ many }) => ({
+  items: many(shoppingListItems),
+}));
+
+export const shoppingListItemRelations = relations(shoppingListItems, ({ one }) => ({
+  list: one(shoppingLists, {
+    fields: [shoppingListItems.shoppingListId],
+    references: [shoppingLists.id],
+  }),
 }));

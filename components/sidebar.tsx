@@ -12,6 +12,7 @@ import {
   Wrench,
   ClipboardList,
   LogOut,
+  UtensilsCrossed,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
@@ -21,6 +22,7 @@ const links = [
   { href: "/projects", label: "Projects", icon: ClipboardList },
   { href: "/my/tasks", label: "My Tasks", icon: CheckSquare },
   { href: "/my/actions", label: "My Actions", icon: ListTodo },
+  { href: "/meals", label: "Meals", icon: UtensilsCrossed },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/contractors", label: "Contractors", icon: Hammer },
   { href: "/personnel", label: "People", icon: UsersRound },
