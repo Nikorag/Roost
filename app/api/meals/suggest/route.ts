@@ -19,10 +19,12 @@ export async function POST(req: Request) {
   }
 
   const now = new Date();
-  const fourteenDaysAgo = new Date(now);
-  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-  const weekEnd = new Date(now);
-  weekEnd.setDate(weekEnd.getDate() + 7);
+  const today = new Date(now);
+  today.setUTCHours(0, 0, 0, 0);
+  const fourteenDaysAgo = new Date(today);
+  fourteenDaysAgo.setUTCDate(fourteenDaysAgo.getUTCDate() - 14);
+  const weekEnd = new Date(today);
+  weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
 
   const history = await db
     .select()
@@ -31,10 +33,23 @@ export async function POST(req: Request) {
     .orderBy(desc(schema.mealHistory.eatenOn))
     .limit(40);
 
+  // Plan entries from the last 14 days up to (but not including) today are
+  // treated as already-eaten even if the user hasn't ticked them off — that
+  // way the AI knows what's been on the menu this week.
+  const pastPlanned = await db
+    .select()
+    .from(schema.mealPlanEntries)
+    .where(
+      and(
+        gte(schema.mealPlanEntries.date, fourteenDaysAgo),
+        lt(schema.mealPlanEntries.date, today),
+      ),
+    );
+
   const planned = await db
     .select()
     .from(schema.mealPlanEntries)
-    .where(and(gte(schema.mealPlanEntries.date, now), lt(schema.mealPlanEntries.date, weekEnd)));
+    .where(and(gte(schema.mealPlanEntries.date, today), lt(schema.mealPlanEntries.date, weekEnd)));
 
   const pantry = await db.select().from(schema.pantryItems);
   const takeaways = await db.select().from(schema.takeawayMeals);
@@ -43,7 +58,7 @@ export async function POST(req: Request) {
   // Hydrate mealie names from the local cache where available.
   const mealieIds = Array.from(
     new Set(
-      [...history, ...planned]
+      [...history, ...planned, ...pastPlanned]
         .map((r) => ("mealieRecipeId" in r ? r.mealieRecipeId : null))
         .filter((x): x is string => Boolean(x)),
     ),
@@ -64,18 +79,39 @@ export async function POST(req: Request) {
     return r.adhocName ?? "Meal";
   };
 
+  // Merge explicit history with past-dated plan entries; de-dupe by (date, name).
+  const mergedRecent: { name: string; date: string; source: string }[] = [];
+  const seen = new Set<string>();
+  for (const h of history) {
+    const date = fmtDate(new Date(h.eatenOn));
+    const name = resolveName(h);
+    const key = `${date}::${name}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    mergedRecent.push({ name, date, source: h.source });
+  }
+  for (const p of pastPlanned) {
+    const date = fmtDate(new Date(p.date));
+    const name = resolveName(p);
+    const key = `${date}::${name}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    mergedRecent.push({ name, date, source: `${p.source} (planned)` });
+  }
+  mergedRecent.sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  const takeawayCountLast14d =
+    history.filter((h) => h.source === "takeaway").length +
+    pastPlanned.filter((p) => p.source === "takeaway").length;
+
   const ctx: SuggestionContext = {
-    recentMeals: history.map((h) => ({
-      name: resolveName(h),
-      date: fmtDate(new Date(h.eatenOn)),
-      source: h.source,
-    })),
+    recentMeals: mergedRecent,
     plannedThisWeek: planned.map((p) => ({
       name: resolveName(p),
       date: fmtDate(new Date(p.date)),
     })),
     pantry: pantry.map((p) => ({ displayName: p.displayName, quantity: p.quantity, unit: p.unit })),
-    takeawayCountLast14d: history.filter((h) => h.source === "takeaway").length,
+    takeawayCountLast14d,
     mealieLibrary: mealieLibrary.map((r) => ({ name: r.name, description: r.description ?? null })),
     takeawayLibrary: takeaways.map((t) => ({ name: t.name, vendor: t.vendor })),
   };

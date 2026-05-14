@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { createRecipe, getRecipe, listPlannableRecipes, uploadRecipeImage } from "@/lib/mealie/client";
 import { and, desc, eq, gte, lt } from "drizzle-orm";
 import { suggestWeeklyPlan, type PlanPick } from "./plan";
+import { shoppingWeekStart } from "./shopping";
 import { generateShoppingListForWeek, normalizeName, normalizeUnit, startOfWeek } from "./shopping";
 
 type MealSlot = "breakfast" | "lunch" | "dinner";
@@ -330,7 +331,7 @@ export async function deletePantryItem(id: string) {
 
 export async function regenerateShoppingList(weekStartIso?: string) {
   const user = await requireUser();
-  const weekStart = startOfWeek(weekStartIso ? new Date(weekStartIso) : new Date());
+  const weekStart = weekStartIso ? startOfWeek(new Date(weekStartIso)) : shoppingWeekStart();
   await generateShoppingListForWeek(weekStart, user.id);
   revalidatePath("/meals/shopping");
 }
@@ -407,7 +408,7 @@ export async function suggestWeeklyPlanAction(weekStartIso: string): Promise<Pla
     weekDates.push(d.toISOString().slice(0, 10));
   }
 
-  const [planned, history, pantryRows, takeawayRows, mealieRecipes] = await Promise.all([
+  const [planned, history, pastPlanned, pantryRows, takeawayRows, mealieRecipes] = await Promise.all([
     db
       .select()
       .from(schema.mealPlanEntries)
@@ -418,6 +419,11 @@ export async function suggestWeeklyPlanAction(weekStartIso: string): Promise<Pla
       .where(gte(schema.mealHistory.eatenOn, fourteenBack))
       .orderBy(desc(schema.mealHistory.eatenOn))
       .limit(40),
+    // Past plan entries (last 14d before the week we're planning) count as eaten.
+    db
+      .select()
+      .from(schema.mealPlanEntries)
+      .where(and(gte(schema.mealPlanEntries.date, fourteenBack), lt(schema.mealPlanEntries.date, weekStart))),
     db.select().from(schema.pantryItems),
     db.select().from(schema.takeawayMeals),
     listPlannableRecipes(),
@@ -436,22 +442,43 @@ export async function suggestWeeklyPlanAction(weekStartIso: string): Promise<Pla
           : p.adhocName ?? "Meal",
   }));
 
-  const recentMeals = history.map((h) => ({
-    date: new Date(h.eatenOn).toISOString().slice(0, 10),
-    name:
+  const recentMeals: { date: string; name: string }[] = [];
+  const seen = new Set<string>();
+  const addRecent = (date: Date, name: string) => {
+    const iso = date.toISOString().slice(0, 10);
+    const key = `${iso}::${name}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    recentMeals.push({ date: iso, name });
+  };
+  for (const h of history) {
+    const name =
       h.source === "mealie" && h.mealieRecipeId
         ? mealieNameMap.get(h.mealieRecipeId) ?? "Recipe"
         : h.source === "takeaway" && h.takeawayMealId
           ? takeawayRows.find((t) => t.id === h.takeawayMealId)?.name ?? "Takeaway"
-          : h.adhocName ?? "Meal",
-  }));
+          : h.adhocName ?? "Meal";
+    addRecent(new Date(h.eatenOn), name);
+  }
+  for (const p of pastPlanned) {
+    const name =
+      p.source === "mealie" && p.mealieRecipeId
+        ? mealieNameMap.get(p.mealieRecipeId) ?? "Recipe"
+        : p.source === "takeaway" && p.takeawayMealId
+          ? takeawayRows.find((t) => t.id === p.takeawayMealId)?.name ?? "Takeaway"
+          : p.adhocName ?? "Meal";
+    addRecent(new Date(p.date), name);
+  }
+  recentMeals.sort((a, b) => (a.date < b.date ? 1 : -1));
 
   return suggestWeeklyPlan({
     weekDates,
     alreadyPlanned,
     recentMeals,
     pantry: pantryRows.map((p) => p.displayName),
-    takeawayCountLast14d: history.filter((h) => h.source === "takeaway").length,
+    takeawayCountLast14d:
+      history.filter((h) => h.source === "takeaway").length +
+      pastPlanned.filter((p) => p.source === "takeaway").length,
     mealieCandidates: mealieRecipes.map((r) => ({ kind: "mealie", id: r.id, name: r.name })),
     takeawayCandidates: takeawayRows.map((t) => ({ kind: "takeaway", id: t.id, name: t.name })),
   });
@@ -518,7 +545,7 @@ export async function applyWeeklyPlanAction(picks: PlanPick[]) {
 
 export async function ensureShoppingListForCurrentWeek(): Promise<string> {
   const user = await requireUser();
-  const weekStart = startOfWeek(new Date());
+  const weekStart = shoppingWeekStart();
   const existing = await db
     .select()
     .from(schema.shoppingLists)

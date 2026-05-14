@@ -1,6 +1,6 @@
 import { db, schema } from "@/lib/db";
 import { and, eq, gte, lt } from "drizzle-orm";
-import { startOfWeek } from "@/lib/meals/shopping";
+import { shoppingWeekStart } from "@/lib/meals/shopping";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingClient } from "./shopping-client";
 import { ensureShoppingListForCurrentWeek } from "@/lib/meals/actions";
@@ -9,7 +9,7 @@ import { BackToMeals } from "@/components/meals/back-link";
 export const dynamic = "force-dynamic";
 
 export default async function ShoppingPage() {
-  const weekStart = startOfWeek(new Date());
+  const weekStart = shoppingWeekStart();
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 7);
 

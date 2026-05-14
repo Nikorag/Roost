@@ -134,6 +134,19 @@ export function startOfWeek(d: Date): Date {
   return x;
 }
 
+/**
+ * Week the shopping list should target. Mon-Wed → current week. Thu-Sun → next
+ * week, because by Thursday you're usually planning ahead, not for the days
+ * that have already passed.
+ */
+export function shoppingWeekStart(d: Date = new Date()): Date {
+  const day = d.getDay(); // 0 Sun..6 Sat
+  const base = startOfWeek(d);
+  const rollNext = day === 0 || day >= 4; // Sun, Thu, Fri, Sat
+  if (rollNext) base.setDate(base.getDate() + 7);
+  return base;
+}
+
 export async function generateShoppingListForWeek(
   weekStart: Date,
   createdBy: string | null,

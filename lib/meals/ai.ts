@@ -32,7 +32,8 @@ to add something, rather than guessing.
   - **<exact name from library>** — <one-line why it fits>
 
 # Preferences
-- Avoid repeating something they ate in the last 5 days unless asked.
+- Use the recent-meals list as context for variety, but DON'T rule meals out
+  just because they were eaten recently. If something still fits, suggest it.
 - Favour recipes whose typical ingredients overlap with the pantry list.
 - If they've ordered a lot of takeaways recently, gently lean toward cooking.
 - Mark takeaway picks with 🥡 and recipes with 🍲 so they're easy to spot.`;
