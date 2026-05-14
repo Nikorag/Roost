@@ -12,7 +12,16 @@ export type MealieRecipeSummary = {
   name: string;
   description?: string | null;
   image?: string | null;
+  tags?: string[];
 };
+
+/**
+ * Tag name (case-insensitive) that excludes a recipe from automatic weekly
+ * plan suggestions. Configurable via env, defaults to "no-plan".
+ */
+export function excludeTagName(): string {
+  return (process.env.MEALIE_EXCLUDE_TAG ?? "no-plan").toLowerCase();
+}
 
 export type MealieIngredient = {
   /** Original full-line text, used as a fallback display. */
@@ -57,6 +66,7 @@ type MealieRecipeJSON = {
   name?: string;
   description?: string | null;
   image?: string | null;
+  tags?: Array<{ name?: string; slug?: string }>;
   recipeIngredient?: Array<{
     display?: string;
     note?: string | null;
@@ -75,7 +85,14 @@ function toSummary(r: MealieRecipeJSON): MealieRecipeSummary | null {
     name: r.name,
     description: r.description ?? null,
     image: imageUrlFor(r.id),
+    tags: (r.tags ?? []).map((t) => (t.name ?? t.slug ?? "").toLowerCase()).filter(Boolean),
   };
+}
+
+export async function listPlannableRecipes(): Promise<MealieRecipeSummary[]> {
+  const tag = excludeTagName();
+  const all = await listAllRecipes();
+  return all.filter((r) => !(r.tags ?? []).includes(tag));
 }
 
 export async function listAllRecipes(maxPages = 4): Promise<MealieRecipeSummary[]> {
@@ -114,6 +131,118 @@ export async function searchRecipes(
     return (json.items ?? []).map(toSummary).filter((x): x is MealieRecipeSummary => x !== null);
   } catch {
     return [];
+  }
+}
+
+export async function createRecipe(input: {
+  name: string;
+  ingredients: string[];
+  description?: string;
+}): Promise<{ slug: string; id: string } | null> {
+  const base = baseUrl();
+  if (!base || !process.env.MEALIE_API_TOKEN) return null;
+
+  // Step 1: create a recipe stub. Mealie POST /api/recipes accepts { name }
+  // and returns either the new slug as a JSON string or an object with `slug`.
+  let slug: string | undefined;
+  try {
+    const res = await fetch(`${base}/api/recipes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...authHeaders(),
+      },
+      body: JSON.stringify({ name: input.name }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    const ct = res.headers.get("content-type") ?? "";
+    if (ct.includes("application/json")) {
+      const data = (await res.json()) as unknown;
+      if (typeof data === "string") slug = data;
+      else if (data && typeof data === "object") {
+        const o = data as { slug?: string; recipe?: { slug?: string } };
+        slug = o.slug ?? o.recipe?.slug;
+      }
+    } else {
+      slug = (await res.text()).replace(/^"|"$/g, "");
+    }
+  } catch {
+    return null;
+  }
+  if (!slug) return null;
+
+  // Step 2: fetch the freshly-created recipe so we can PATCH it back complete.
+  const fetched = await fetch(`${base}/api/recipes/${encodeURIComponent(slug)}`, {
+    headers: { Accept: "application/json", ...authHeaders() },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!fetched.ok) return null;
+  const recipe = (await fetched.json()) as Record<string, unknown> & {
+    id?: string;
+    slug?: string;
+  };
+
+  // Step 3: PUT with ingredients filled in. We use the `note` field which
+  // Mealie shows verbatim, so unstructured AI output renders correctly without
+  // needing Food/Unit rows to exist.
+  const body = {
+    ...recipe,
+    description: input.description ?? recipe.description ?? "",
+    recipeIngredient: input.ingredients.map((text) => ({
+      note: text,
+      display: text,
+      originalText: text,
+      quantity: null,
+      unit: null,
+      food: null,
+      isFood: false,
+    })),
+  };
+  try {
+    const put = await fetch(`${base}/api/recipes/${encodeURIComponent(slug)}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...authHeaders(),
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!put.ok) return null;
+  } catch {
+    return null;
+  }
+  return { slug, id: (recipe.id as string) ?? slug };
+}
+
+export async function uploadRecipeImage(
+  slug: string,
+  image: { contentType: string; data: Buffer },
+): Promise<boolean> {
+  const base = baseUrl();
+  if (!base || !process.env.MEALIE_API_TOKEN) return false;
+  const ext = image.contentType.includes("png")
+    ? "png"
+    : image.contentType.includes("webp")
+      ? "webp"
+      : "jpg";
+  const form = new FormData();
+  // `Blob` works as a File in Node 20+ for multipart fetch bodies.
+  form.append("image", new Blob([image.data as unknown as ArrayBuffer], { type: image.contentType }), `recipe.${ext}`);
+  form.append("extension", ext);
+  try {
+    const res = await fetch(`${base}/api/recipes/${encodeURIComponent(slug)}/image`, {
+      method: "PUT",
+      headers: { ...authHeaders() },
+      body: form,
+      signal: AbortSignal.timeout(30_000),
+    });
+    return res.ok;
+  } catch {
+    return false;
   }
 }
 

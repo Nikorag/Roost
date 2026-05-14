@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
-import { mealieConfigured } from "@/lib/mealie/client";
+import { excludeTagName, mealieConfigured } from "@/lib/mealie/client";
 import { BackToMeals } from "@/components/meals/back-link";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +40,7 @@ export default async function MealsSettings() {
         <CardHeader>
           <CardTitle>Mealie</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm">
+        <CardContent className="text-sm space-y-2">
           {mealieConfigured() ? (
             <div className="text-emerald-700">Connected.</div>
           ) : (
@@ -49,6 +49,11 @@ export default async function MealsSettings() {
               your environment.
             </div>
           )}
+          <div className="text-xs text-muted-foreground">
+            To exclude a recipe from AI weekly-plan suggestions, tag it{" "}
+            <code>{excludeTagName()}</code> in Mealie. Override the tag name with{" "}
+            <code>MEALIE_EXCLUDE_TAG</code>.
+          </div>
         </CardContent>
       </Card>
 

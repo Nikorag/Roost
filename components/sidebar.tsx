@@ -13,6 +13,7 @@ import {
   ClipboardList,
   LogOut,
   UtensilsCrossed,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
@@ -60,6 +61,13 @@ export function Sidebar({ userName }: { userName?: string | null }) {
       </nav>
       <div className="px-3 pb-5 pt-3 border-t mx-3">
         <div className="px-2 py-2 text-xs text-muted-foreground truncate">{userName ?? "Signed in"}</div>
+        <Link
+          href="/settings/ai"
+          className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm text-foreground/70 hover:bg-muted"
+        >
+          <Settings className="size-4" />
+          Settings
+        </Link>
         <Link
           href="/api/auth/signout"
           className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm text-foreground/70 hover:bg-muted"

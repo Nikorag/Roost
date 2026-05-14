@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { buildPromptAdditions } from "@/lib/ai-settings";
 
 export type ChatMessage = { role: "user" | "model"; text: string };
 
@@ -93,10 +94,11 @@ export async function streamMealSuggestion(
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) return null;
 
+  const extra = await buildPromptAdditions("meal_chat");
   const genai = new GoogleGenerativeAI(apiKey);
   const model = genai.getGenerativeModel({
     model: "gemini-2.5-flash",
-    systemInstruction: SYSTEM_PROMPT,
+    systemInstruction: SYSTEM_PROMPT + extra,
   });
 
   const contents = [

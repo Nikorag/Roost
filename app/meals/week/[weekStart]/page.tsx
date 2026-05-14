@@ -8,6 +8,7 @@ import { getEntriesInRange } from "@/lib/meals/queries";
 import { startOfWeek } from "@/lib/meals/shopping";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { BackToMeals } from "@/components/meals/back-link";
+import { PlanSuggester } from "@/components/meals/plan-suggester";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,10 @@ export default async function WeekPage(props: { params: Promise<{ weekStart: str
 
   return (
     <div className="space-y-4">
-      <BackToMeals />
+      <div className="flex items-center justify-between">
+        <BackToMeals />
+        <PlanSuggester weekStartIso={isoDay(ws)} />
+      </div>
       <header className="flex items-center justify-between gap-2">
         <Button asChild variant="ghost" size="icon" aria-label="Previous week">
           <Link href={`/meals/week/${isoDay(prev)}`}><ChevronLeft className="size-4" /></Link>

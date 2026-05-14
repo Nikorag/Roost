@@ -392,6 +392,14 @@ export const eventRelations = relations(events, ({ many, one }) => ({
   links: many(eventLinks),
 }));
 
+/* ---------- AI prompt settings ---------- */
+
+export const aiPromptSettings = pgTable("ai_prompt_settings", {
+  key: text("key").primaryKey(),
+  instructions: text("instructions").notNull().default(""),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /* ---------- meals ---------- */
 
 export const takeawayMeals = pgTable("takeaway_meals", {

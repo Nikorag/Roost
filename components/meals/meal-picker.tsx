@@ -3,7 +3,8 @@ import { useEffect, useState, useTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, Loader2 } from "lucide-react";
+import { Search, X, Loader2, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { planMealieMeal, planTakeawayMeal, planAdhocMeal } from "@/lib/meals/actions";
 
 type Takeaway = { id: string; name: string; vendor: string | null; emoji: string | null };
@@ -129,6 +130,13 @@ export function MealPicker({
                 {hits.length === 0 && !searching && mealieConfigured && (
                   <div className="p-2 text-xs text-muted-foreground">No matches.</div>
                 )}
+                <Link
+                  href="/meals/new-recipe"
+                  className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:underline px-2"
+                  onClick={close}
+                >
+                  <Sparkles className="size-3" /> Create a new recipe with AI
+                </Link>
                 <div className="grid gap-2">
                   {hits.map((h) => (
                     <button

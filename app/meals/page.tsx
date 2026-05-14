@@ -6,7 +6,7 @@ import { DaySlot } from "@/components/meals/day-slot";
 import { AiSuggest } from "@/components/meals/ai-suggest";
 import { getEntriesInRange } from "@/lib/meals/queries";
 import { startOfWeek } from "@/lib/meals/shopping";
-import { ChevronRight, CalendarDays, ShoppingCart, Package, Pizza } from "lucide-react";
+import { ChevronRight, CalendarDays, ShoppingCart, Package, Pizza, Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +96,9 @@ export default async function MealsHome() {
         </Button>
         <Button asChild variant="soft" size="lg" className="justify-start">
           <Link href="/meals/takeaways"><Pizza className="size-4" /> Takeaways</Link>
+        </Button>
+        <Button asChild variant="soft" size="lg" className="justify-start">
+          <Link href="/meals/new-recipe"><Sparkles className="size-4" /> New recipe with AI</Link>
         </Button>
         <Button asChild variant="soft" size="lg" className="justify-start">
           <Link href="/meals/settings"><CalendarDays className="size-4" /> Calendar &amp; settings</Link>
