@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
   CheckSquare,
@@ -14,6 +15,7 @@ import {
   LogOut,
   UtensilsCrossed,
   Settings,
+  MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
@@ -82,28 +84,97 @@ export function Sidebar({ userName }: { userName?: string | null }) {
 
 export function MobileNav() {
   const pathname = usePathname();
-  const items = links.slice(0, 5);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const primary = links.slice(0, 4);
+  const overflow = links.slice(4);
+
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
+  const overflowActive = overflow.some((l) => pathname.startsWith(l.href)) || pathname.startsWith("/settings");
+
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 glass border-t px-2 pb-[env(safe-area-inset-bottom)]">
-      <div className="flex items-stretch justify-around py-1.5">
-        {items.map((l) => {
-          const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
-          const Icon = l.icon;
-          return (
+    <>
+      {moreOpen ? (
+        <div
+          className="md:hidden fixed inset-0 z-30 bg-black/30"
+          onClick={() => setMoreOpen(false)}
+          aria-hidden
+        />
+      ) : null}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 glass border-t px-2 pb-[env(safe-area-inset-bottom)]">
+        {moreOpen ? (
+          <div className="border-b py-2 px-1 grid grid-cols-4 gap-1">
+            {overflow.map((l) => {
+              const active = pathname.startsWith(l.href);
+              const Icon = l.icon;
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={cn(
+                    "flex flex-col items-center gap-0.5 px-2 py-2 rounded-2xl text-[11px]",
+                    active ? "text-emerald-700" : "text-muted-foreground",
+                  )}
+                >
+                  <Icon className="size-5" />
+                  {l.label}
+                </Link>
+              );
+            })}
             <Link
-              key={l.href}
-              href={l.href}
+              href="/settings"
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl text-[11px]",
-                active ? "text-emerald-700" : "text-muted-foreground",
+                "flex flex-col items-center gap-0.5 px-2 py-2 rounded-2xl text-[11px]",
+                pathname.startsWith("/settings") ? "text-emerald-700" : "text-muted-foreground",
               )}
             >
-              <Icon className="size-5" />
-              {l.label}
+              <Settings className="size-5" />
+              Settings
             </Link>
-          );
-        })}
-      </div>
-    </nav>
+            <Link
+              href="/api/auth/signout"
+              className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-2xl text-[11px] text-muted-foreground"
+            >
+              <LogOut className="size-5" />
+              Sign out
+            </Link>
+          </div>
+        ) : null}
+        <div className="flex items-stretch justify-around py-1.5">
+          {primary.map((l) => {
+            const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+            const Icon = l.icon;
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl text-[11px]",
+                  active ? "text-emerald-700" : "text-muted-foreground",
+                )}
+              >
+                <Icon className="size-5" />
+                {l.label}
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setMoreOpen((v) => !v)}
+            aria-expanded={moreOpen}
+            aria-label="More"
+            className={cn(
+              "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl text-[11px]",
+              moreOpen || overflowActive ? "text-emerald-700" : "text-muted-foreground",
+            )}
+          >
+            <MoreHorizontal className="size-5" />
+            More
+          </button>
+        </div>
+      </nav>
+    </>
   );
 }

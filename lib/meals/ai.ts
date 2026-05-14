@@ -11,6 +11,7 @@ export type SuggestionContext = {
   mealieLibrary: { name: string; description: string | null }[];
   takeawayLibrary: { name: string; vendor: string | null }[];
   calendarEvents?: { date: string; summary: string; time?: string; allDay: boolean }[];
+  householdProfile?: string;
 };
 
 const SYSTEM_PROMPT = `You are a warm, practical household meal-planning helper.
@@ -40,10 +41,26 @@ to add something, rather than guessing.
 - Mark takeaway picks with 🥡 and recipes with 🍲 so they're easy to spot.
 - If the family calendar shows busy/late events tonight (or on the day in
   question), lean toward quick or prep-ahead meals. Mention the calendar event
-  briefly in your reasoning ("you've got football at 6, so…").`;
+  briefly in your reasoning ("you've got football at 6, so…").
+
+# Calendar tact (IMPORTANT)
+- Use the household profile to interpret calendar events. Don't assume the
+  default tone from an event title alone — "Tommy's anniversary" might be a
+  wedding anniversary OR the anniversary of a death.
+- If the profile flags an event as sensitive (memorial, illness, bereavement,
+  custody handover, separation, anniversary of a loss), AVOID celebratory
+  language ("celebrate with…", "fun meal", "treat yourselves") and avoid
+  jokey tone. Suggest something comforting and low-key instead.
+- When in doubt about an event's tone, stay neutral. Don't ask the user to
+  explain a sensitive event.`;
 
 function fmtContext(ctx: SuggestionContext): string {
   const lines: string[] = [];
+  if (ctx.householdProfile && ctx.householdProfile.trim()) {
+    lines.push("# Household profile (use to interpret events tactfully)");
+    lines.push(ctx.householdProfile.trim());
+    lines.push("");
+  }
   lines.push("# Household context");
   lines.push(
     `## Mealie recipe library (${ctx.mealieLibrary.length} items) — you MAY suggest these:`,

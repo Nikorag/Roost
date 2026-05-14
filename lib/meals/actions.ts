@@ -475,6 +475,7 @@ export async function suggestWeeklyPlanAction(weekStartIso: string): Promise<Pla
 
   const calIcsUrl = await getSetting(SETTING_KEYS.googleCalendarIcs);
   const calendarEvents = calIcsUrl ? await fetchEventsInRange(calIcsUrl, weekStart, weekEnd) : [];
+  const householdProfile = await getSetting(SETTING_KEYS.householdProfile);
 
   return suggestWeeklyPlan({
     weekDates,
@@ -492,6 +493,7 @@ export async function suggestWeeklyPlanAction(weekStartIso: string): Promise<Pla
       time: e.time,
       allDay: e.allDay,
     })),
+    householdProfile,
   });
 }
 

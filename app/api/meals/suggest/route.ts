@@ -58,6 +58,7 @@ export async function POST(req: Request) {
   const mealieLibrary = mealieConfigured() ? await listAllRecipes() : [];
   const calIcsUrl = await getSetting(SETTING_KEYS.googleCalendarIcs);
   const calendarEvents = calIcsUrl ? await fetchEventsInRange(calIcsUrl, today, weekEnd) : [];
+  const householdProfile = await getSetting(SETTING_KEYS.householdProfile);
 
   // Hydrate mealie names from the local cache where available.
   const mealieIds = Array.from(
@@ -124,6 +125,7 @@ export async function POST(req: Request) {
       time: e.time,
       allDay: e.allDay,
     })),
+    householdProfile,
   };
 
   const stream = await streamMealSuggestion(messages, ctx);

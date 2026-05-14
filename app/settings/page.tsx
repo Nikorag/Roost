@@ -1,19 +1,26 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, CalendarDays, ChevronRight } from "lucide-react";
+import { Sparkles, CalendarDays, ChevronRight, UsersRound } from "lucide-react";
 
 const items = [
   {
-    href: "/settings/ai",
-    title: "AI prompts",
-    description: "Tune global and per-feature instructions for the AI.",
-    icon: Sparkles,
+    href: "/settings/household",
+    title: "Household profile",
+    description:
+      "Tell the AI about your family so it interprets calendar events with the right tone.",
+    icon: UsersRound,
   },
   {
     href: "/settings/calendars",
     title: "Calendars",
     description: "Connect a Google calendar (ICS) so the AI knows what's on your week.",
     icon: CalendarDays,
+  },
+  {
+    href: "/settings/ai",
+    title: "AI prompts",
+    description: "Tune global and per-feature instructions for the AI.",
+    icon: Sparkles,
   },
 ] as const;
 

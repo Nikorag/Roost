@@ -26,6 +26,7 @@ export type PlanContext = {
   mealieCandidates: PlanCandidate[];
   takeawayCandidates: PlanCandidate[];
   calendarEvents?: { date: string; summary: string; time?: string; allDay: boolean }[];
+  householdProfile?: string;
 };
 
 const SYSTEM = `You build a weekly dinner plan for one household.
@@ -44,6 +45,12 @@ const SYSTEM = `You build a weekly dinner plan for one household.
 - Days already planned should be returned as-is with kind="skip" (don't overwrite).
 - If the family calendar shows a busy/late event on a day, prefer quick or
   prep-ahead meals (or a takeaway) for that day. Reflect this in the "reason".
+- Use the household profile (if provided) to interpret calendar events tactfully.
+  An event title alone is not enough to tell the tone — a "Tommy's anniversary"
+  event might be a wedding anniversary or a memorial. If the profile marks a
+  date as sensitive (memorial, bereavement, illness, custody, separation),
+  AVOID celebratory framing. Suggest something comforting and low-key, and
+  keep the "reason" neutral.
 
 # Output
 Return strict JSON only, matching:
@@ -65,7 +72,12 @@ export async function suggestWeeklyPlan(ctx: PlanContext): Promise<PlanPick[]> {
     generationConfig: { responseMimeType: "application/json" },
   });
 
-  const prompt = `Week dates: ${ctx.weekDates.join(", ")}
+  const profileBlock =
+    ctx.householdProfile && ctx.householdProfile.trim()
+      ? `\n# Household profile (use to interpret events tactfully)\n${ctx.householdProfile.trim()}\n\n`
+      : "";
+
+  const prompt = `${profileBlock}Week dates: ${ctx.weekDates.join(", ")}
 
 Already planned (leave alone, kind="skip"):
 ${ctx.alreadyPlanned.map((p) => `- ${p.date}: ${p.name}`).join("\n") || "(none)"}

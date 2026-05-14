@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 
 export const SETTING_KEYS = {
   googleCalendarIcs: "google_calendar_ics_url",
+  householdProfile: "household_profile",
 } as const;
 
 export async function getSetting(key: string): Promise<string> {
