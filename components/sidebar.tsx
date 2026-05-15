@@ -85,14 +85,20 @@ export function Sidebar({ userName }: { userName?: string | null }) {
 export function MobileNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
-  const primary = links.slice(0, 4);
-  const overflow = links.slice(4);
+  const primaryHrefs = new Set(["/", "/projects", "/meals", "/settings"]);
+  const primary = [
+    links.find((l) => l.href === "/")!,
+    links.find((l) => l.href === "/projects")!,
+    links.find((l) => l.href === "/meals")!,
+    { href: "/settings", label: "Settings", icon: Settings },
+  ];
+  const overflow = links.filter((l) => !primaryHrefs.has(l.href));
 
   useEffect(() => {
     setMoreOpen(false);
   }, [pathname]);
 
-  const overflowActive = overflow.some((l) => pathname.startsWith(l.href)) || pathname.startsWith("/settings");
+  const overflowActive = overflow.some((l) => pathname.startsWith(l.href));
 
   return (
     <>
@@ -123,16 +129,6 @@ export function MobileNav() {
                 </Link>
               );
             })}
-            <Link
-              href="/settings"
-              className={cn(
-                "flex flex-col items-center gap-0.5 px-2 py-2 rounded-2xl text-[11px]",
-                pathname.startsWith("/settings") ? "text-emerald-700" : "text-muted-foreground",
-              )}
-            >
-              <Settings className="size-5" />
-              Settings
-            </Link>
             <Link
               href="/api/auth/signout"
               className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-2xl text-[11px] text-muted-foreground"
