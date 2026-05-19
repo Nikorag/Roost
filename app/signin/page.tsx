@@ -10,7 +10,7 @@ export default async function SignIn({
   const { from } = await searchParams;
   const configured = authConfigured();
   return (
-    <div className="min-h-dvh flex items-center justify-center p-6 bg-gradient-to-br from-pastel-mint via-pastel-sky to-pastel-lilac">
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-gradient-to-br from-pastel-sky via-pastel-sky to-pastel-lilac">
       <div className="w-full max-w-md rounded-3xl bg-card/90 glass shadow-xl p-8">
         <div className="flex items-center gap-3 mb-6">
           <LogoMark className="size-12" />

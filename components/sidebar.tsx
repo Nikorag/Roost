@@ -51,7 +51,7 @@ export function Sidebar({ userName }: { userName?: string | null }) {
               className={cn(
                 "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm transition-colors",
                 active
-                  ? "bg-pastel-mint/70 text-emerald-900 font-medium"
+                  ? "bg-pastel-sky/70 text-blue-900 font-medium"
                   : "text-foreground/80 hover:bg-muted",
               )}
             >
@@ -121,7 +121,7 @@ export function MobileNav() {
                   href={l.href}
                   className={cn(
                     "flex flex-col items-center gap-0.5 px-2 py-2 rounded-2xl text-[11px]",
-                    active ? "text-emerald-700" : "text-muted-foreground",
+                    active ? "text-blue-700" : "text-muted-foreground",
                   )}
                 >
                   <Icon className="size-5" />
@@ -148,7 +148,7 @@ export function MobileNav() {
                 href={l.href}
                 className={cn(
                   "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl text-[11px]",
-                  active ? "text-emerald-700" : "text-muted-foreground",
+                  active ? "text-blue-700" : "text-muted-foreground",
                 )}
               >
                 <Icon className="size-5" />
@@ -163,7 +163,7 @@ export function MobileNav() {
             aria-label="More"
             className={cn(
               "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl text-[11px]",
-              moreOpen || overflowActive ? "text-emerald-700" : "text-muted-foreground",
+              moreOpen || overflowActive ? "text-blue-700" : "text-muted-foreground",
             )}
           >
             <MoreHorizontal className="size-5" />

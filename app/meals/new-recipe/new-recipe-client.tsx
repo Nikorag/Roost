@@ -116,7 +116,7 @@ export function NewRecipeClient() {
                   onChange={(e) => updateRow(r.id, { text: e.target.value })}
                   className={"flex-1 border-0 shadow-none focus-visible:ring-0 px-2 " + (r.include ? "" : "line-through text-muted-foreground")}
                 />
-                {r.ai && <span className="text-[10px] uppercase tracking-wide text-emerald-700">AI</span>}
+                {r.ai && <span className="text-[10px] uppercase tracking-wide text-blue-700">AI</span>}
                 <Button variant="ghost" size="icon" aria-label="Remove" onClick={() => removeRow(r.id)}>
                   <Trash2 className="size-4" />
                 </Button>

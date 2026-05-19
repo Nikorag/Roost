@@ -73,7 +73,7 @@ export default async function WeekPage(props: { params: Promise<{ weekStart: str
           const key = isoDay(d);
           const slots = slotted[key] ?? {};
           return (
-            <Card key={key} className={key === todayKey ? "ring-1 ring-emerald-300" : ""}>
+            <Card key={key} className={key === todayKey ? "ring-1 ring-blue-300" : ""}>
               <CardContent className="p-3 space-y-2">
                 <div className="text-sm font-medium">{fmt(d)}</div>
                 <DaySlot date={key} slot="dinner" entry={slots.dinner ?? null} takeaways={takeaways} />

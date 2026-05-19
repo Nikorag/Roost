@@ -126,7 +126,7 @@ function MaterialCard({ material, actions }: { material: Material; actions: Acti
       : null;
 
   return (
-    <div className={cn("rounded-2xl p-4 space-y-3", material.purchased ? "bg-pastel-mint/40" : "bg-muted/40")}>
+    <div className={cn("rounded-2xl p-4 space-y-3", material.purchased ? "bg-pastel-sky/40" : "bg-muted/40")}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ function MaterialCard({ material, actions }: { material: Material; actions: Acti
             className={cn(
               "size-8 rounded-full flex items-center justify-center",
               material.purchased
-                ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                ? "bg-blue-500 text-white hover:bg-blue-600"
                 : "hover:bg-background text-muted-foreground",
             )}
             aria-label={material.purchased ? "Mark as to purchase" : "Mark as purchased"}
@@ -324,7 +324,7 @@ function OptionRow({
     <div
       className={cn(
         "rounded-2xl border p-3 transition-colors",
-        chosen ? "bg-pastel-mint/60 border-emerald-200" : "bg-background hover:bg-muted/30",
+        chosen ? "bg-pastel-sky/60 border-blue-200" : "bg-background hover:bg-muted/30",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -343,7 +343,7 @@ function OptionRow({
               <span className="text-xs font-medium">{formatMoney(option.priceCents)}</span>
             )}
             {chosen && (
-              <Badge className="bg-emerald-500 text-white">Chosen</Badge>
+              <Badge className="bg-blue-500 text-white">Chosen</Badge>
             )}
           </div>
           {option.description && (
@@ -357,7 +357,7 @@ function OptionRow({
               target="_blank"
               rel="noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="text-xs text-emerald-700 hover:underline inline-flex items-center gap-1 mt-1"
+              className="text-xs text-blue-700 hover:underline inline-flex items-center gap-1 mt-1"
             >
               <ExternalLink className="size-3" />
               {hostnameOf(option.url)}

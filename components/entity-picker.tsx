@@ -90,14 +90,14 @@ export function EntityPicker({
                   }
                   className={cn(
                     "w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors",
-                    isAttached && "bg-pastel-mint/40",
+                    isAttached && "bg-pastel-sky/40",
                   )}
                 >
                   <div className="min-w-0">
                     <div className="text-sm truncate">{item.label}</div>
                     {item.sub && <div className="text-xs text-muted-foreground truncate">{item.sub}</div>}
                   </div>
-                  {isAttached && <Check className="size-4 text-emerald-700 shrink-0" />}
+                  {isAttached && <Check className="size-4 text-blue-700 shrink-0" />}
                 </button>
               );
             })}
@@ -116,7 +116,7 @@ export function EntityPicker({
                     setQuery("");
                   })
                 }
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-muted/50 text-emerald-800"
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-muted/50 text-blue-800"
               >
                 <Plus className="size-3.5" />
                 {createLabel} <span className="font-medium">"{query.trim()}"</span>

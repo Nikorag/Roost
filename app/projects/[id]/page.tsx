@@ -258,7 +258,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Images className="size-4 text-emerald-700" /> Images
+            <Images className="size-4 text-blue-700" /> Images
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -468,7 +468,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <PackageOpen className="size-4 text-emerald-700" /> Materials
+            <PackageOpen className="size-4 text-blue-700" /> Materials
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -515,7 +515,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="size-4 text-emerald-700" /> Events
+            <Calendar className="size-4 text-blue-700" /> Events
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -584,7 +584,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
       <div className="grid lg:grid-cols-3 gap-4">
         <AttachCard
           title="Contractors"
-          icon={<Hammer className="size-4 text-emerald-700" />}
+          icon={<Hammer className="size-4 text-blue-700" />}
           available={directories.contractors}
           attachedIds={attachedContractorIds}
           onAttach={async (cid: string) => {
@@ -604,7 +604,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
         />
         <AttachCard
           title="People"
-          icon={<UsersRound className="size-4 text-emerald-700" />}
+          icon={<UsersRound className="size-4 text-blue-700" />}
           available={directories.personnel}
           attachedIds={attachedPersonnelIds}
           onAttach={async (pid: string) => {
@@ -624,7 +624,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
         />
         <AttachCard
           title="Tools"
-          icon={<Wrench className="size-4 text-emerald-700" />}
+          icon={<Wrench className="size-4 text-blue-700" />}
           available={allTools.map((t) => ({ id: t.id, label: t.name, sub: t.location ?? undefined }))}
           attachedIds={attachedToolIds}
           onAttach={async (tid: string) => {
@@ -648,7 +648,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="size-4 text-emerald-700" /> Quotes
+              <FileText className="size-4 text-blue-700" /> Quotes
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -683,7 +683,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="size-4 text-emerald-700" /> Invoices
+              <FileText className="size-4 text-blue-700" /> Invoices
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">

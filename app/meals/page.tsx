@@ -74,11 +74,11 @@ export default async function MealsHome() {
           const dinner = slotted[key]?.dinner ?? null;
           const isToday = key === todayKey;
           return (
-            <Card key={key} className={isToday ? "ring-1 ring-emerald-300" : ""}>
+            <Card key={key} className={isToday ? "ring-1 ring-blue-300" : ""}>
               <CardContent className="p-3 space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium">{fmt(d)}</span>
-                  {isToday && <span className="text-emerald-700">Today</span>}
+                  {isToday && <span className="text-blue-700">Today</span>}
                 </div>
                 <DaySlot date={key} slot="dinner" entry={dinner} takeaways={takeaways} compact />
               </CardContent>

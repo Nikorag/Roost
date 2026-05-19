@@ -10,15 +10,15 @@ export function LogoMark({ className }: { className?: string }) {
       role="img"
       aria-label="Roost"
     >
-      <rect width="64" height="64" rx="14" fill="#cdeedd" />
+      <rect width="64" height="64" rx="14" fill="#cfe7ff" />
       <circle cx="44" cy="20" r="4" fill="#ffd1a8" />
       <path
         d="M14 32 L32 16 L50 32 L50 46 a4 4 0 0 1 -4 4 H18 a4 4 0 0 1 -4 -4 Z"
-        fill="#1f9e84"
+        fill="#3b82f6"
       />
-      <rect x="28.5" y="36" width="7" height="14" rx="2" fill="#cdeedd" />
-      <circle cx="22" cy="32" r="2.2" fill="#cdeedd" />
-      <circle cx="42" cy="32" r="2.2" fill="#cdeedd" />
+      <rect x="28.5" y="36" width="7" height="14" rx="2" fill="#cfe7ff" />
+      <circle cx="22" cy="32" r="2.2" fill="#cfe7ff" />
+      <circle cx="42" cy="32" r="2.2" fill="#cfe7ff" />
     </svg>
   );
 }

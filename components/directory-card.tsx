@@ -141,7 +141,7 @@ export function DirectoryCard({
                 href={v}
                 target="_blank"
                 rel="noreferrer"
-                className="text-emerald-700 hover:underline block"
+                className="text-blue-700 hover:underline block"
               >
                 {b.label ?? "Website"}
               </a>

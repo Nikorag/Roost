@@ -132,7 +132,7 @@ export function MealPicker({
                 )}
                 <Link
                   href="/meals/new-recipe"
-                  className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:underline px-2"
+                  className="inline-flex items-center gap-1 text-xs text-blue-700 hover:underline px-2"
                   onClick={close}
                 >
                   <Sparkles className="size-3" /> Create a new recipe with AI

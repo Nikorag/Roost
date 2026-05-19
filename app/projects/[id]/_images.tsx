@@ -29,7 +29,7 @@ type Actions = {
 const KINDS: { value: ProjectImage["kind"]; label: string; tint: string }[] = [
   { value: "before", label: "Before", tint: "bg-pastel-rose text-rose-900" },
   { value: "progress", label: "Progress", tint: "bg-pastel-lemon text-yellow-900" },
-  { value: "after", label: "After", tint: "bg-pastel-mint text-emerald-900" },
+  { value: "after", label: "After", tint: "bg-pastel-sky text-blue-900" },
   { value: "other", label: "Other", tint: "bg-muted text-muted-foreground" },
 ];
 
@@ -179,7 +179,7 @@ export function ProjectImages({
       {genOpen && (
         <div className="rounded-2xl border bg-card p-4 space-y-3">
           <div className="text-sm font-medium flex items-center gap-2">
-            <Sparkles className="size-4 text-emerald-700" />
+            <Sparkles className="size-4 text-blue-700" />
             Imagine the finished project
           </div>
           {grouped.before.length > 0 && (
@@ -193,7 +193,7 @@ export function ProjectImages({
                     onClick={() => setBasedOn(basedOn === b.id ? null : b.id)}
                     className={cn(
                       "size-16 rounded-xl overflow-hidden border-2 transition-colors",
-                      basedOn === b.id ? "border-emerald-500" : "border-transparent",
+                      basedOn === b.id ? "border-blue-500" : "border-transparent",
                     )}
                   >
                     <SmartImage src={b.url} alt="" wrapperClassName="size-full" className="size-full object-cover" />
@@ -204,7 +204,7 @@ export function ProjectImages({
                   onClick={() => setBasedOn(null)}
                   className={cn(
                     "size-16 rounded-xl border-2 text-xs",
-                    basedOn === null ? "border-emerald-500 bg-emerald-50" : "border-dashed",
+                    basedOn === null ? "border-blue-500 bg-blue-50" : "border-dashed",
                   )}
                 >
                   Text only

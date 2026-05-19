@@ -42,7 +42,7 @@ export default async function MealsSettings() {
         </CardHeader>
         <CardContent className="text-sm space-y-2">
           {mealieConfigured() ? (
-            <div className="text-emerald-700">Connected.</div>
+            <div className="text-blue-700">Connected.</div>
           ) : (
             <div className="text-muted-foreground">
               Not configured. Set <code>MEALIE_BASE_URL</code> and <code>MEALIE_API_TOKEN</code> in
@@ -63,7 +63,7 @@ export default async function MealsSettings() {
         </CardHeader>
         <CardContent className="text-sm">
           {process.env.GOOGLE_GENERATIVE_AI_API_KEY ? (
-            <div className="text-emerald-700">Gemini configured.</div>
+            <div className="text-blue-700">Gemini configured.</div>
           ) : (
             <div className="text-muted-foreground">
               Set <code>GOOGLE_GENERATIVE_AI_API_KEY</code> to enable suggestions.

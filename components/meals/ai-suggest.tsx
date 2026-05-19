@@ -154,7 +154,7 @@ export function AiSuggest({ date }: { date: string }) {
                 <div
                   className={
                     "rounded-2xl px-3 py-2 text-sm " +
-                    (m.role === "user" ? "bg-pastel-mint/60 text-emerald-900 ml-8" : "bg-muted mr-8")
+                    (m.role === "user" ? "bg-pastel-sky/60 text-blue-900 ml-8" : "bg-muted mr-8")
                   }
                 >
                   {m.role === "user" ? (

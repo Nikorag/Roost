@@ -37,8 +37,8 @@ export default function SettingsHome() {
             <Link key={i.href} href={i.href}>
               <Card className="hover:shadow-md transition-shadow h-full">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <div className="size-10 rounded-2xl bg-pastel-mint/60 flex items-center justify-center">
-                    <Icon className="size-5 text-emerald-800" />
+                  <div className="size-10 rounded-2xl bg-pastel-sky/60 flex items-center justify-center">
+                    <Icon className="size-5 text-blue-800" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium">{i.title}</div>

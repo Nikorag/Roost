@@ -56,12 +56,12 @@ export function AttachCard({
                 type="button"
                 disabled={pending}
                 onClick={() => start(() => onDetach(a.id))}
-                className="group inline-flex items-center gap-1.5 rounded-full bg-pastel-mint text-emerald-900 pl-3 pr-2 py-1 text-xs"
+                className="group inline-flex items-center gap-1.5 rounded-full bg-pastel-sky text-blue-900 pl-3 pr-2 py-1 text-xs"
                 title="Click to remove"
               >
                 <span>
                   {a.label}
-                  {a.sub && <span className="text-emerald-800/70"> · {a.sub}</span>}
+                  {a.sub && <span className="text-blue-800/70"> · {a.sub}</span>}
                 </span>
                 <X className="size-3.5 opacity-60 group-hover:opacity-100" />
               </button>

@@ -19,7 +19,7 @@ type ImageKind = "before" | "progress" | "after" | "other";
 const KINDS: { value: ImageKind; label: string; tint: string }[] = [
   { value: "before", label: "Before", tint: "bg-pastel-rose text-rose-900" },
   { value: "progress", label: "Progress", tint: "bg-pastel-lemon text-yellow-900" },
-  { value: "after", label: "After", tint: "bg-pastel-mint text-emerald-900" },
+  { value: "after", label: "After", tint: "bg-pastel-sky text-blue-900" },
   { value: "other", label: "Other", tint: "bg-white/80 text-foreground" },
 ];
 

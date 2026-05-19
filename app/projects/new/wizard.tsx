@@ -205,7 +205,7 @@ export function Wizard({ directory }: { directory: Directory }) {
               key={s}
               className={cn(
                 "h-1.5 w-8 rounded-full transition-colors",
-                i <= step ? "bg-emerald-500" : "bg-muted",
+                i <= step ? "bg-blue-500" : "bg-muted",
               )}
             />
           ))}
@@ -247,7 +247,7 @@ export function Wizard({ directory }: { directory: Directory }) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="size-4 text-emerald-700" />
+              <Sparkles className="size-4 text-blue-700" />
               AI suggestions
             </CardTitle>
             <p className="text-sm text-muted-foreground">
@@ -331,7 +331,7 @@ export function Wizard({ directory }: { directory: Directory }) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ImagePlus className="size-4 text-emerald-700" />
+              <ImagePlus className="size-4 text-blue-700" />
               Photos
             </CardTitle>
             <p className="text-sm text-muted-foreground">
@@ -518,14 +518,14 @@ function SuggestionGroup({
               className={cn(
                 "w-full text-left rounded-2xl px-3 py-2 border transition-colors flex items-start gap-3",
                 it.selected
-                  ? "bg-pastel-mint/60 border-emerald-200"
+                  ? "bg-pastel-sky/60 border-blue-200"
                   : "bg-muted/30 hover:bg-muted",
               )}
             >
               <span
                 className={cn(
-                  "mt-0.5 size-5 rounded-md border flex items-center justify-center text-emerald-700",
-                  it.selected && "bg-emerald-500 text-white border-emerald-500",
+                  "mt-0.5 size-5 rounded-md border flex items-center justify-center text-blue-700",
+                  it.selected && "bg-blue-500 text-white border-blue-500",
                 )}
               >
                 {it.selected && <Check className="size-3.5" />}
@@ -585,7 +585,7 @@ function DirectoryMatch({
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs border transition-colors",
                   selected
-                    ? "bg-pastel-mint text-emerald-900 border-emerald-200"
+                    ? "bg-pastel-sky text-blue-900 border-blue-200"
                     : "hover:bg-muted",
                 )}
               >

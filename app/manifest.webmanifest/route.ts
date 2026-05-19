@@ -5,8 +5,8 @@ export function GET() {
     description: "Plan and track every household project in one place.",
     start_url: "/",
     display: "standalone",
-    background_color: "#fbf8f4",
-    theme_color: "#cdeedd",
+    background_color: "#0f1626",
+    theme_color: "#0f1626",
     icons: [
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
       { src: "/apple-icon.svg", sizes: "180x180", type: "image/svg+xml", purpose: "any" },

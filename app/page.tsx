@@ -128,7 +128,7 @@ export default async function Dashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {mealDays.map((d) => (
             <Link key={d.key} href={`/meals/week/${weekStartIso}`}>
-              <Card className={`hover:shadow-md transition-shadow h-full ${d.isToday ? "ring-1 ring-emerald-300" : ""}`}>
+              <Card className={`hover:shadow-md transition-shadow h-full ${d.isToday ? "ring-1 ring-blue-300" : ""}`}>
                 <CardContent className="p-3 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-medium">{d.label}</span>
@@ -155,7 +155,7 @@ export default async function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Wrench className="size-4 text-emerald-700" /> Open actions
+              <Wrench className="size-4 text-blue-700" /> Open actions
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -178,7 +178,7 @@ export default async function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="size-4 text-emerald-700" /> Upcoming
+              <Calendar className="size-4 text-blue-700" /> Upcoming
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">

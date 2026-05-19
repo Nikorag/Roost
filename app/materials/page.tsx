@@ -53,7 +53,7 @@ export default async function MaterialsPage() {
                 <Badge
                   className={
                     m.purchased
-                      ? "bg-pastel-mint text-emerald-900"
+                      ? "bg-pastel-sky text-blue-900"
                       : "bg-pastel-lemon text-yellow-900"
                   }
                 >
@@ -67,7 +67,7 @@ export default async function MaterialsPage() {
                         key={o.id}
                         className={
                           o.id === m.chosenOptionId
-                            ? "bg-pastel-mint text-emerald-900"
+                            ? "bg-pastel-sky text-blue-900"
                             : "bg-muted text-muted-foreground"
                         }
                       >
@@ -78,7 +78,7 @@ export default async function MaterialsPage() {
                   </div>
                 )}
                 {chosen && (
-                  <p className="text-xs text-emerald-700">Chosen: {chosen.label}</p>
+                  <p className="text-xs text-blue-700">Chosen: {chosen.label}</p>
                 )}
               </CardContent>
             </Card>
